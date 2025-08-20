@@ -1,0 +1,216 @@
+<WelcomeScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            font_size: root.height/30
+            text: ('[b]Welcome to the Rating App! [/b] \nPlease read the instructions carefully before proceeding.')
+            markup: True
+            size_hint_y: 0.15
+        Label:
+            text: 'Instructions follow here...'
+            size_hint_y: 0.7
+        BoxLayout:
+            size_hint_y: 0.15
+            Button:
+                font_size: root.height/40           
+                text: 'Back'
+                # This button does nothing for now, just a placeholder
+                on_release: app.root.current = 'welcome'
+                opacity: .5 # Make invisible as it's just a placeholder
+            Button:
+                font_size: root.height/40           
+                text: 'Next'
+                on_release: app.root.current = 'questionnaire'
+
+
+<QuestionnaireScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Please enter your information below.'
+            font_size: root.height/40
+            size_hint_y: 0.10
+            height: '48dp'
+        BoxLayout:
+            size_hint_y: 0.10
+            height: '48dp'
+
+            Label:
+                font_size: root.height/40
+                text: 'Please select your gender'
+            ToggleButton:
+                font_size: root.height/40
+                text: 'M'
+                group: "user_gender"
+                on_state: root.gender_clicked(self, self.state, "M")
+            ToggleButton:
+                font_size: root.height/40
+                text: 'F'
+                group: "user_gender"
+                on_state: root.gender_clicked(self, self.state, "F")
+            ToggleButton:
+                font_size: root.height/40
+                text: 'D'
+                group: "user_gender"
+                on_state: root.gender_clicked(self, self.state, "D")
+            
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Enter your age'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.age_input(self, self.text)
+
+        BoxLayout:
+            size_hint_y: 0.10
+            height: '48dp'
+            Label:
+                font_size: root.height/40
+                text: 'Coaching License:'
+            ToggleButton:
+                font_size: root.height/40
+                text: 'None'
+                group: "user_license"
+                on_state: root.license_clicked(self, self.state, "None")
+            ToggleButton:
+                font_size: root.height/40
+                text: 'B'
+                group: "user_license"
+                on_state: root.license_clicked(self, self.state, "B")
+            ToggleButton:
+                font_size: root.height/40
+                text: 'A'
+                group: "user_license"
+                on_state: root.license_clicked(self, self.state, "A")
+            ToggleButton:
+                font_size: root.height/40
+                text: 'Pro'
+                group: "user_license"
+                on_state: root.license_clicked(self, self.state, "Pro")
+        
+        TextInput:
+            font_size: root.height/30
+            hint_text: "Enter the first two letters of your father's first name"
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.id_input_1(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: "Enter the last two letters of your mother's first name"
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.id_input_2(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: "Enter the sum of your birthdate (day+month). E.g. 12th of April: 12+4=26"
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.id_input_3(self, self.text)   
+  
+        Label:
+            size_hint_y: 0.45
+            text: ''
+
+        BoxLayout:
+            size_hint_y: 0.15
+            Button:
+                font_size: root.height/40
+                text: 'Back'
+                on_release: app.root.current = 'welcome'
+            Button:
+                font_size: root.height/40
+                text: 'Next'
+                on_release:
+                    app.root.current = 'videoplayer'
+                    root.save_user_data()
+
+<ColoredLabel@Label>:
+    canvas.before:
+        Color:
+            rgba: (100/255, 100/255, 100/255,1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: (0,0,0,1)
+        Line:
+            rectangle: self.x, self.y, self.width, self.height
+            width: .8
+
+<VideoPlayerScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: .1
+            ColoredLabel:
+                id: team_label
+                font_size: root.height/40
+                text: 'No Team'
+                bold: True
+            ColoredLabel:
+                id: player_label
+                font_size: root.height/40
+                text: 'No Player'
+                bold: True
+            ColoredLabel:
+                id: type_label
+                font_size: root.height/40
+                text: 'No Type'
+                bold: True
+            ColoredLabel:
+                id: bodypart_label
+                font_size: root.height/40
+                text: 'No Bodypart'
+                bold: True
+        VideoPlayer:
+            size_hint_y: .65
+            id: video_player
+        Label:
+            id: info_label
+            size_hint_y: .05
+        BoxLayout:
+            canvas.before:
+                Color:
+                    rgba: (100/255, 100/255, 100/255,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            size_hint_y: .05
+            Label:
+                font_size: root.height/40
+                size_hint_x: .2
+                text: 'Creativity Rating:'
+            Slider:
+                id: rating_slider
+                size_hint_x: .7
+                min: 0
+                max: 10
+                value: 0
+                step: 1
+            Label:
+                size_hint_x: .1
+                font_size: root.height/30
+                text: str(int(rating_slider.value))
+        BoxLayout:
+            size_hint_y: 0.15
+            Button:
+                font_size: root.height/40
+                size_hint_x: .25
+                text: 'Back to User data'
+                on_release: app.root.current = 'questionnaire'
+            Button:
+                font_size: root.height/40
+                size_hint_x: .25
+                text: 'Previous Action'
+                on_release: root.previous_video(self)
+            Button:
+                id: submit_button
+                font_size: root.height/40
+                size_hint_x: .5
+                text: 'Submit Rating'
+                on_release:
+                    root.submit_rating()
+
+                

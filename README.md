@@ -1,39 +1,51 @@
 ## To Dos
 
+### Prio 1
+
 -   zusätzliche Infos im Questionnaire Screen
 
--   App auf fullscreen starten
+    -   Erfahrung als Spieler:in (Jahren)
 
--   möglicherweise zusätzliche Skalen für technical correctness, aesthetic appeal o.ä.? (s. Notes Amabile von Sebastian)
+    -   Erfahrung als Trainer:in (Jahren)
 
--   effizientes Speichern der Ratings mit User ID x Event ID als filename
+    -   Erfahrung beim Fußball schauen (Jahre)
 
--   Funktionalität zum Weiterarbeiten (merken, welcher User welche Videos geratet hat)
+-   möglicherweise zusätzliche Skalen für technical correctness, aesthetic appeal (**2 zusätzliche Dimensionen)**
 
--   Rating-Skala: -5 bis 5? -3 bis 3?
+-   Rating-Skala auf 7-Pkt-Likert: -3 bis 3 (inkl. 0)
 
--   Export/Sicherungskopie aller Ratings als CSV
+-   Regler von Slider auf Radar ändern (Auswahl anklicken können)
 
--   mit großer Masse an Events integrieren
-
--   auf PC im SHK Raum zum Laufen bringen
-
--   MAC nutzen
-
--   deutsch/englisch möglich
+-   Punkte beschriften mit "not creative" bis "very creative"
 
 -   config-file anlegen, in dem zentrale Konfigurationen geändert werden können (und in App geladen; potenziell in App Umstellung erlauben?)
 
--   Pfad zu Action Videos
+    -   Pfad für Videos
 
--   Pfad zu Event daten
+    -   Pfad für Eventdaten
 
--   zu bewertende Dimensionen
-
--   anzuzeigende Features der Aktion
-
--   Eventdaten in Datenbank schreiben und aus DB laden, um alle Events zu haben?
+-   Funktionalität: merken, welcher User welche Videos gerated hat und Videos skippen, wenn schon gerated
 
 -   button “action occluded” hinzufügen
 
+-   button "action not recognized" hinzufügen
+
 -   am Ende einmal mit Sebastian durchgehen, ob alles konform mit theoretischem Hintergrund
+
+### Prio 2
+
+-   App auf fullscreen starten
+-   
+-   auf PC im SHK Raum zum Laufen bringen
+    -   macOS
+
+    -   Windows
+-   Eventdaten in Datenbank schreiben und aus DB laden, um alle Events zu haben?
+
+### Prio 3
+
+-   deutsch/englisch möglich
+
+-   Export/Sicherungskopie aller Ratings als CSV
+
+-   mehr anzuzeigende Features der Aktion

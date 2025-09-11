@@ -15,11 +15,13 @@
             size_hint_y: 0.15
             Button:
                 font_size: root.height/40
+                font_size: root.height/40
                 text: 'Back'
                 # This button does nothing for now, just a placeholder
                 on_release: app.root.current = 'welcome'
                 opacity: .5 # Make invisible as it's just a placeholder
             Button:
+                font_size: root.height/40
                 font_size: root.height/40
                 text: 'Next'
                 on_release: app.root.current = 'questionnaire'
@@ -56,12 +58,37 @@
                 group: "user_gender"
                 on_state: root.gender_clicked(self, self.state, "D")
 
+
         TextInput:
             font_size: root.height/30
             hint_text: 'Enter your age'
             size_hint_y: 0.10
             height: '48dp'
             on_text: root.age_input(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Erfahrung als Spieler:in (Jahren)'
+            input_filter: 'int'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.player_exp_input(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Erfahrung als Trainer:in (Jahren)'
+            input_filter: 'int'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.coach_exp_input(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Erfahrung beim Fußball schauen (Jahre)'
+            input_filter: 'int'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.watch_exp_input(self, self.text)
 
         TextInput:
             font_size: root.height/30
@@ -114,6 +141,7 @@
                 group: "user_license"
                 on_state: root.license_clicked(self, self.state, "Pro")
 
+
         TextInput:
             font_size: root.height/30
             hint_text: "Enter the first two letters of your father's first name"
@@ -133,6 +161,8 @@
             hint_text: "Enter the sum of your birthdate (day+month). E.g. 12th of April: 12+4=26"
             size_hint_y: 0.10
             height: '48dp'
+            on_text: root.id_input_3(self, self.text)
+
             on_text: root.id_input_3(self, self.text)
 
         Label:
@@ -197,7 +227,7 @@
             id: info_label
             size_hint_y: .05
 
-        ########### Abfrage Kreativität ###########
+        # Abfrage Kreativität
         BoxLayout:
             canvas.before:
                 Color:
@@ -240,6 +270,7 @@
                     id: r_0
                     text: '0'
                     group: 'likert7'
+                    state: 'down'  # Default
                     on_state: root.set_likert(0) if self.state == 'down' else None
                 ToggleButton:
                     id: r_p1
@@ -274,7 +305,7 @@
                 Label:
                     text: 'very creative'
 
-        ########## Abfrage technical correctness #########
+        # Abfrage technical correctness
         BoxLayout:
             canvas.before:
                 Color:
@@ -317,6 +348,7 @@
                     id: t_0
                     text: '0'
                     group: 'likert7_tech'
+                    state: 'down'
                     on_state: root.set_likert_tech(0) if self.state == 'down' else None
                 ToggleButton:
                     id: t_p1
@@ -350,7 +382,7 @@
                 Label:
                     text: 'correct'
 
-        ########## Abfrage aesthetic appeal ##########
+        # Abfrage aesthetic appeal
         BoxLayout:
             canvas.before:
                 Color:
@@ -393,6 +425,7 @@
                     id: a_0
                     text: '0'
                     group: 'likert7_aes'
+                    state: 'down'
                     on_state: root.set_likert_aesthetic(0) if self.state == 'down' else None
                 ToggleButton:
                     id: a_p1

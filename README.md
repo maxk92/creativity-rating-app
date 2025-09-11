@@ -17,9 +17,13 @@
 
 - ~~Punkte beschriften mit "not creative" bis "very creative"~~
 
+<<<<<<< HEAD
 - ~~Bedingung des Weiterclickens an die Kreativitätsabfrage knüpfen~~
 
 - ~~entfernen der Vorauswahl der Ratings~~
+=======
+- entfernen der Vorauswahl der Ratings
+>>>>>>> 31a020c (Add files via upload)
 
 -   config-file anlegen, in dem zentrale Konfigurationen geändert werden können (und in App geladen; potenziell in App Umstellung erlauben?)
 

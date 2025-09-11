@@ -1,2 +1,4 @@
 .vscode
 kivyCreativityEnv/
+data/
+.venv/

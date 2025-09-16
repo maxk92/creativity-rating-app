@@ -1,22 +1,25 @@
 ## To Dos
 
 ### Prio 1
+- ~~zusätzliche Infos im Questionnaire Screen~~
 
--   zusätzliche Infos im Questionnaire Screen
+  - ~~Erfahrung als Spieler:in (Jahren)~~
 
-    -   Erfahrung als Spieler:in (Jahren)
+  - ~~Erfahrung als Trainer:in (Jahren)~~
 
-    -   Erfahrung als Trainer:in (Jahren)
+  - ~~Erfahrung beim Fußball schauen (Jahre)~~
 
-    -   Erfahrung beim Fußball schauen (Jahre)
+- ~~möglicherweise zusätzliche Skalen für technical correctness, aesthetic appeal (2 zusätzliche Dimensionen)~~
 
--   möglicherweise zusätzliche Skalen für technical correctness, aesthetic appeal (**2 zusätzliche Dimensionen)**
+- ~~Rating-Skala auf 7-Pkt-Likert: -3 bis 3 (inkl. 0)~~
 
--   Rating-Skala auf 7-Pkt-Likert: -3 bis 3 (inkl. 0)
+- ~~Regler von Slider auf Radar ändern (Auswahl anklicken können)~~
 
--   Regler von Slider auf Radar ändern (Auswahl anklicken können)
+- ~~Punkte beschriften mit "not creative" bis "very creative"~~
 
--   Punkte beschriften mit "not creative" bis "very creative"
+- ~~Bedingung des Weiterclickens an die Kreativitätsabfrage knüpfen~~
+
+- ~~entfernen der Vorauswahl der Ratings~~
 
 -   config-file anlegen, in dem zentrale Konfigurationen geändert werden können (und in App geladen; potenziell in App Umstellung erlauben?)
 
@@ -30,12 +33,10 @@
 
 -   button "action not recognized" hinzufügen
 
--   am Ende einmal mit Sebastian durchgehen, ob alles konform mit theoretischem Hintergrund
-
 ### Prio 2
 
 -   App auf fullscreen starten
--   
+
 -   auf PC im SHK Raum zum Laufen bringen
     -   macOS
 

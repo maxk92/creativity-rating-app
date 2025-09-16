@@ -1,3 +1,5 @@
+
+
 <WelcomeScreen>:
     BoxLayout:
         orientation: 'vertical'
@@ -12,13 +14,13 @@
         BoxLayout:
             size_hint_y: 0.15
             Button:
-                font_size: root.height/40           
+                font_size: root.height/40
                 text: 'Back'
                 # This button does nothing for now, just a placeholder
                 on_release: app.root.current = 'welcome'
                 opacity: .5 # Make invisible as it's just a placeholder
             Button:
-                font_size: root.height/40           
+                font_size: root.height/40
                 text: 'Next'
                 on_release: app.root.current = 'questionnaire'
 
@@ -53,13 +55,37 @@
                 text: 'D'
                 group: "user_gender"
                 on_state: root.gender_clicked(self, self.state, "D")
-            
+
         TextInput:
             font_size: root.height/30
             hint_text: 'Enter your age'
             size_hint_y: 0.10
             height: '48dp'
             on_text: root.age_input(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Erfahrung als Spieler:in (Jahren)'
+            input_filter: 'int'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.player_exp_input(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Erfahrung als Trainer:in (Jahren)'
+            input_filter: 'int'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.coach_exp_input(self, self.text)
+
+        TextInput:
+            font_size: root.height/30
+            hint_text: 'Erfahrung beim Fußball schauen (Jahre)'
+            input_filter: 'int'
+            size_hint_y: 0.10
+            height: '48dp'
+            on_text: root.watch_exp_input(self, self.text)
 
         BoxLayout:
             size_hint_y: 0.10
@@ -87,7 +113,7 @@
                 text: 'Pro'
                 group: "user_license"
                 on_state: root.license_clicked(self, self.state, "Pro")
-        
+
         TextInput:
             font_size: root.height/30
             hint_text: "Enter the first two letters of your father's first name"
@@ -107,8 +133,8 @@
             hint_text: "Enter the sum of your birthdate (day+month). E.g. 12th of April: 12+4=26"
             size_hint_y: 0.10
             height: '48dp'
-            on_text: root.id_input_3(self, self.text)   
-  
+            on_text: root.id_input_3(self, self.text)
+
         Label:
             size_hint_y: 0.45
             text: ''
@@ -170,6 +196,8 @@
         Label:
             id: info_label
             size_hint_y: .05
+
+        ########### Abfrage Kreativität ###########
         BoxLayout:
             canvas.before:
                 Color:
@@ -177,22 +205,227 @@
                 Rectangle:
                     pos: self.pos
                     size: self.size
-            size_hint_y: .05
-            Label:
-                font_size: root.height/40
-                size_hint_x: .2
-                text: 'Creativity Rating:'
-            Slider:
-                id: rating_slider
-                size_hint_x: .7
-                min: 0
-                max: 10
-                value: 0
-                step: 1
-            Label:
-                size_hint_x: .1
-                font_size: root.height/30
-                text: str(int(rating_slider.value))
+            size_hint_y: .12
+            orientation: 'vertical'
+
+            BoxLayout:
+                size_hint_y: .4
+                Label:
+                    font_size: root.height/40
+                    size_hint_x: None
+                    text: 'Creativity Rating:'
+                    width: dp(220)
+                    halign: 'left'
+                    text_size: self.size
+
+            BoxLayout:
+                size_hint_y: .4
+                spacing: 6
+                ToggleButton:
+                    id: r_m3
+                    text: '-3'
+                    group: 'likert7'
+                    on_state: root.set_likert(-3) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_m2
+                    text: '-2'
+                    group: 'likert7'
+                    on_state: root.set_likert(-2) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_m1
+                    text: '-1'
+                    group: 'likert7'
+                    on_state: root.set_likert(-1) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_0
+                    text: '0'
+                    group: 'likert7'
+                    on_state: root.set_likert(0) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_p1
+                    text: '1'
+                    group: 'likert7'
+                    on_state: root.set_likert(1) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_p2
+                    text: '2'
+                    group: 'likert7'
+                    on_state: root.set_likert(2) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_p3
+                    text: '3'
+                    group: 'likert7'
+                    on_state: root.set_likert(3) if self.state == 'down' else None
+
+            BoxLayout:
+                size_hint_y: .2
+                Label:
+                    text: 'not creative'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    text: 'neutral'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    text: 'very creative'
+
+        ########## Abfrage technical correctness #########
+        BoxLayout:
+            canvas.before:
+                Color:
+                    rgba: (100/255, 100/255, 100/255,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            size_hint_y: .12
+            orientation: 'vertical'
+
+            BoxLayout:
+                size_hint_y: .4
+                Label:
+                    font_size: root.height/40
+                    size_hint_x: None
+                    text: 'Technical correctness:'
+                    width: dp(220)
+                    halign: 'left'
+                    text_size: self.size
+
+            BoxLayout:
+                size_hint_y: .4
+                spacing: 6
+                ToggleButton:
+                    id: t_m3
+                    text: '-3'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(-3) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_m2
+                    text: '-2'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(-2) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_m1
+                    text: '-1'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(-1) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_0
+                    text: '0'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(0) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_p1
+                    text: '1'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(1) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_p2
+                    text: '2'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(2) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_p3
+                    text: '3'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(3) if self.state == 'down' else None
+            BoxLayout:
+                size_hint_y: .2
+                Label:
+                    text: 'not correct'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    text: 'neutral'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    text: 'correct'
+
+        ########## Abfrage aesthetic appeal ##########
+        BoxLayout:
+            canvas.before:
+                Color:
+                    rgba: (100/255, 100/255, 100/255,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            size_hint_y: .12
+            orientation: 'vertical'
+
+            BoxLayout:
+                size_hint_y: .4
+                Label:
+                    font_size: root.height/40
+                    size_hint_x: None
+                    text: 'Aesthetic appeal:'
+                    width: dp(220)
+                    halign: 'left'
+                    text_size: self.size
+
+            BoxLayout:
+                size_hint_y: .4
+                spacing: 6
+                ToggleButton:
+                    id: a_m3
+                    text: '-3'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(-3) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_m2
+                    text: '-2'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(-2) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_m1
+                    text: '-1'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(-1) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_0
+                    text: '0'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(0) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_p1
+                    text: '1'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(1) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_p2
+                    text: '2'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(2) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_p3
+                    text: '3'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(3) if self.state == 'down' else None
+            BoxLayout:
+                size_hint_y: .2
+                Label:
+                    text: 'not appealing'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    text: 'neutral'
+                Label:
+                    text: ''
+                Label:
+                    text: ''
+                Label:
+                    text: 'very appealing'
+
         BoxLayout:
             size_hint_y: 0.15
             Button:
@@ -210,7 +443,7 @@
                 font_size: root.height/40
                 size_hint_x: .5
                 text: 'Submit Rating'
+                disabled: root.current_rating is None
+                opacity: 1 if not self.disabled else .5
                 on_release:
                     root.submit_rating()
-
-                

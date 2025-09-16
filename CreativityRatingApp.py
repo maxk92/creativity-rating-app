@@ -7,15 +7,21 @@ from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, CardTransition, SwapTransition, WipeTransition, FallOutTransition
 from kivy.lang import Builder
+from kivy.uix.popup import Popup
+from kivy.properties import NumericProperty
 kivy.require("1.9.1")
 import json
 import random
+from pathlib import Path
 
 class User:
     def __init__(self):
         self.user_id = ''
         self.gender = 'Not specified'
         self.age = 0
+        self.player_exp = 0
+        self.coach_exp = 0
+        self.watch_exp = 0
         self.license = 'Not specified'
         self.id_part1 = ''
         self.id_part2 = ''
@@ -31,6 +37,25 @@ class User:
 
     def set_user_age(self, age):
         self.age = age
+
+    def set_player_exp(self, years):
+        self.player_exp = years
+
+    def set_coach_exp(self, years):
+        self.coach_exp = years
+
+    def set_watch_exp(self, years):
+        self.watch_exp = years
+
+    def set_user_player_exp(self, years):
+        return self.set_player_exp(years)
+
+    def set_user_coach_exp(self, years):
+        return self.set_coach_exp(years)
+
+    def set_user_watch_exp(self, years):
+        return self.set_watch_exp(years)
+    # -----------------------------------------------------------------------
 
     def set_user_license(self, license):
         self.license = license
@@ -59,6 +84,15 @@ class QuestionnaireScreen(Screen):
     def age_input(self, instance, value):
         App.get_running_app().user.set_user_age(value)
 
+    def player_exp_input(self, instance, value):
+        App.get_running_app().user.set_user_player_exp(value)
+
+    def coach_exp_input(self, instance, value):
+        App.get_running_app().user.set_user_coach_exp(value)
+
+    def watch_exp_input(self, instance, value):
+        App.get_running_app().user.set_user_watch_exp(value)
+
     def id_input_1(self, instance, value):
         App.get_running_app().user.id_part1 = value.lower()
         App.get_running_app().user.set_user_id()
@@ -78,7 +112,7 @@ class QuestionnaireScreen(Screen):
     def license_clicked(self, instance, value, license):
         if value == "down":
             App.get_running_app().user.set_user_license(license)
-   
+
     def save_user_data(self):
         print(App.get_running_app().user.user_id)
         with open('user_data/' + str(App.get_running_app().user.user_id) + '.json', 'w') as f:
@@ -87,15 +121,21 @@ class QuestionnaireScreen(Screen):
 
 
 class VideoPlayerScreen(Screen):
+    current_rating = NumericProperty(None, allownone=True)       # Creativity
+    technical_rating = NumericProperty(None, allownone=True)     # Technical correctness
+    aesthetic_rating = NumericProperty(None, allownone=True)     # Aesthetic appeal
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.index = 0
 
         # Load metadata from CSV
-        self.path_metadata = '/home/max/drive/coding/projects/13___creativity/lsa-creativity/data/df_actions/'
-        self.ls_matches  = [match.split('.')[0] for match in os.listdir(self.path_metadata)]
-        self.metadata = pd.concat([pd.read_csv(self.path_metadata + actions_df+'.csv') for actions_df in self.ls_matches])
-        self.path_videos = '/media/max/Elements/Sebastian_Spiele/Bundesliga/'
+        self.path_metadata = '/Users/Esther/Desktop/creativity-rating-app-main/meta_data'
+        meta = Path(self.path_metadata)
+        csv_paths = sorted(meta.glob("[!.]*.csv"))
+        self.ls_matches = [p.stem for p in csv_paths]
+        self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
+        self.path_videos = '/Users/Esther/Desktop/creativity-rating-app-main/Videos'
 
         self.videos = [
             os.path.join(self.path_videos, folder, file)
@@ -115,7 +155,31 @@ class VideoPlayerScreen(Screen):
 
     def previous_video(self, instance):
         pass
-        
+
+    # --- minimal neu: Set-Methoden für alle drei Skalen ---
+    def set_likert(self, value):
+        self.current_rating = int(value)
+
+    def set_likert_tech(self, value):
+        self.technical_rating = int(value)
+
+    def set_likert_aesthetic(self, value):
+        self.aesthetic_rating = int(value)
+
+    def reset_likert(self):
+        for btn_id in (
+                'r_m3', 'r_m2', 'r_m1', 'r_0', 'r_p1', 'r_p2', 'r_p3',
+                't_m3', 't_m2', 't_m1', 't_0', 't_p1', 't_p2', 't_p3',
+                'a_m3', 'a_m2', 'a_m1', 'a_0', 'a_p1', 'a_p2', 'a_p3'
+        ):
+            if btn_id in self.ids:
+                self.ids[btn_id].state = 'normal'
+
+        self.current_rating = None
+        self.technical_rating = None
+        self.aesthetic_rating = None
+    # ------------------------------------------------------
+
     def load_video(self):
         if self.index < len(self.videos):
             video_file = self.videos[self.index]
@@ -126,39 +190,55 @@ class VideoPlayerScreen(Screen):
 
             self.action_id = action_id
             row = self.metadata[self.metadata['id'] == str(self.action_id)]
-            
-            #self.update_metadata(video_file)
-            
+
             # update metadata to be displayed above video
             self.ids.team_label.text     = str(row.team.values[0])
             self.ids.player_label.text   = str(row.player.values[0])
             self.ids.type_label.text     = str(row.type.values[0])
             self.ids.bodypart_label.text = str(row.iloc[0]["shot_body_part"] if pd.notna(row.iloc[0]["shot_body_part"]) else (row.iloc[0]["pass_body_part"] if pd.notna(row.iloc[0]["pass_body_part"]) else None))
-            # set rating slider to 0
-            self.ids.rating_slider.value = 0
-            # make sure submit button has full opacity
+
+            # Likert auf 0 setzen (alle drei)
+            self.reset_likert()
+
+            # submit sichtbar
             self.ids.submit_button.opacity = 1
-            
-            # increase index by 1 for next video to be loaded
+
+            # nächstes Video
             self.index += 1
         else:
             self.ids.info_label.text = "No more videos to rate."
             self.ids.video_player.opacity = 0
             self.ids.submit_button.opacity = .5
-            
-    
+
+
     def submit_rating(self):
-        rating = self.ids.rating_slider.value
-        #action_id = self.videos[self.index].split('.')[0]
+
+        # Sperren des Submit Buttons wenn kein Kreativitätsrating ausgeführt wird
+        if self.current_rating is None:
+            Popup(
+                title="no selection",
+                content=Label(text="Please rate the creativity."),
+                size_hint=(0.6, 0.3)
+            ).open()
+            return
+
+        rating_creativity = self.current_rating
+        rating_technical  = self.technical_rating
+        rating_aesthetic  = self.aesthetic_rating
 
         with open('user_ratings/' + str(App.get_running_app().user.user_id) + '_' + str(self.action_id)+'.json', 'w') as f:
-            json.dump({'user_id' : App.get_running_app().user.user_id, 'id': self.action_id, 'action_rating' : rating}, f)
+            json.dump({
+                'user_id' : App.get_running_app().user.user_id,
+                'id': self.action_id,
+                'action_rating' : rating_creativity,         # bestehendes Feld
+                'technical_correctness': rating_technical,    # neu
+                'aesthetic_appeal': rating_aesthetic          # neu
+            }, f)
 
-        print(f"Video rated: {rating}/10")  
-        print(self.index)
+        print(f"Ratings -> creativity: {rating_creativity}, technical: {rating_technical}, aesthetic: {rating_aesthetic}")
         self.load_video()
 
-        
+
 
 class RatingApp(App):
     def __init__(self, **kwargs):
@@ -171,9 +251,9 @@ class RatingApp(App):
         screen_manager.add_widget(WelcomeScreen(name = "welcome"))
         screen_manager.add_widget(QuestionnaireScreen(name="questionnaire"))
         screen_manager.add_widget(VideoPlayerScreen(name="videoplayer"))
-        
+
         return screen_manager
-    
+
 
 if __name__ == '__main__':
     RatingApp().run()

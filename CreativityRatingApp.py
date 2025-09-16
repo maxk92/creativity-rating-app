@@ -7,7 +7,8 @@ from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, CardTransition, SwapTransition, WipeTransition, FallOutTransition
 from kivy.lang import Builder
-from kivy.properties import NumericProperty  # <-- minimal neu (für Likert-Werte)
+from kivy.uix.popup import Popup
+from kivy.properties import NumericProperty
 kivy.require("1.9.1")
 import json
 import random
@@ -46,7 +47,6 @@ class User:
     def set_watch_exp(self, years):
         self.watch_exp = years
 
-    # --- minimal hinzugefügt: Aliase, damit die KV-Handler funktionieren ---
     def set_user_player_exp(self, years):
         return self.set_player_exp(years)
 
@@ -121,10 +121,9 @@ class QuestionnaireScreen(Screen):
 
 
 class VideoPlayerScreen(Screen):
-    # <-- minimal neu: drei Properties für die Likert-Werte
-    current_rating = NumericProperty(0)           # Creativity
-    technical_rating = NumericProperty(0)         # Technical correctness
-    aesthetic_rating = NumericProperty(0)         # Aesthetic appeal
+    current_rating = NumericProperty(None, allownone=True)       # Creativity
+    technical_rating = NumericProperty(None, allownone=True)     # Technical correctness
+    aesthetic_rating = NumericProperty(None, allownone=True)     # Aesthetic appeal
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -168,21 +167,17 @@ class VideoPlayerScreen(Screen):
         self.aesthetic_rating = int(value)
 
     def reset_likert(self):
-        # Buttons der drei Gruppen (falls vorhanden) auf neutral setzen
-        for btn_id in ('r_m3', 'r_m2', 'r_m1', 'r_0', 'r_p1', 'r_p2', 'r_p3',
-                       't_m3', 't_m2', 't_m1', 't_0', 't_p1', 't_p2', 't_p3',
-                       'a_m3', 'a_m2', 'a_m1', 'a_0', 'a_p1', 'a_p2', 'a_p3'):
+        for btn_id in (
+                'r_m3', 'r_m2', 'r_m1', 'r_0', 'r_p1', 'r_p2', 'r_p3',
+                't_m3', 't_m2', 't_m1', 't_0', 't_p1', 't_p2', 't_p3',
+                'a_m3', 'a_m2', 'a_m1', 'a_0', 'a_p1', 'a_p2', 'a_p3'
+        ):
             if btn_id in self.ids:
                 self.ids[btn_id].state = 'normal'
-        if 'r_0' in self.ids:
-            self.ids.r_0.state = 'down'
-        if 't_0' in self.ids:
-            self.ids.t_0.state = 'down'
-        if 'a_0' in self.ids:
-            self.ids.a_0.state = 'down'
-        self.current_rating = 0
-        self.technical_rating = 0
-        self.aesthetic_rating = 0
+
+        self.current_rating = None
+        self.technical_rating = None
+        self.aesthetic_rating = None
     # ------------------------------------------------------
 
     def load_video(self):
@@ -217,7 +212,16 @@ class VideoPlayerScreen(Screen):
 
 
     def submit_rating(self):
-        # alle drei Werte mitschreiben
+
+        # Sperren des Submit Buttons wenn kein Kreativitätsrating ausgeführt wird
+        if self.current_rating is None:
+            Popup(
+                title="no selection",
+                content=Label(text="Please rate the creativity."),
+                size_hint=(0.6, 0.3)
+            ).open()
+            return
+
         rating_creativity = self.current_rating
         rating_technical  = self.technical_rating
         rating_aesthetic  = self.aesthetic_rating

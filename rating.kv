@@ -227,7 +227,7 @@
             id: info_label
             size_hint_y: .05
 
-        # Abfrage Kreativität
+        ########### Abfrage Kreativität ###########
         BoxLayout:
             canvas.before:
                 Color:
@@ -270,7 +270,6 @@
                     id: r_0
                     text: '0'
                     group: 'likert7'
-                    state: 'down'  # Default
                     on_state: root.set_likert(0) if self.state == 'down' else None
                 ToggleButton:
                     id: r_p1
@@ -305,7 +304,7 @@
                 Label:
                     text: 'very creative'
 
-        # Abfrage technical correctness
+        ########## Abfrage technical correctness #########
         BoxLayout:
             canvas.before:
                 Color:
@@ -348,7 +347,6 @@
                     id: t_0
                     text: '0'
                     group: 'likert7_tech'
-                    state: 'down'
                     on_state: root.set_likert_tech(0) if self.state == 'down' else None
                 ToggleButton:
                     id: t_p1
@@ -382,7 +380,7 @@
                 Label:
                     text: 'correct'
 
-        # Abfrage aesthetic appeal
+        ########## Abfrage aesthetic appeal ##########
         BoxLayout:
             canvas.before:
                 Color:
@@ -425,7 +423,6 @@
                     id: a_0
                     text: '0'
                     group: 'likert7_aes'
-                    state: 'down'
                     on_state: root.set_likert_aesthetic(0) if self.state == 'down' else None
                 ToggleButton:
                     id: a_p1

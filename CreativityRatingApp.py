@@ -1,18 +1,20 @@
 import kivy
 import pandas as pd
-import numpy as np
 import os
+os.environ['KIVY_VIDEO'] = 'ffpyplayer'
 import json
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, CardTransition, SwapTransition, WipeTransition, FallOutTransition
 from kivy.lang import Builder
 from kivy.uix.popup import Popup
-from kivy.properties import NumericProperty
+from kivy.properties import NumericProperty, BooleanProperty
 kivy.require("1.9.1")
-import json
 import random
 from pathlib import Path
+from datetime import datetime
+
+
 
 class User:
     def __init__(self):
@@ -55,7 +57,6 @@ class User:
 
     def set_user_watch_exp(self, years):
         return self.set_watch_exp(years)
-    # -----------------------------------------------------------------------
 
     def set_user_license(self, license):
         self.license = license
@@ -114,16 +115,31 @@ class QuestionnaireScreen(Screen):
             App.get_running_app().user.set_user_license(license)
 
     def save_user_data(self):
-        print(App.get_running_app().user.user_id)
-        with open('user_data/' + str(App.get_running_app().user.user_id) + '.json', 'w') as f:
-            json.dump({'user_id' : App.get_running_app().user.user_id, 'gender': App.get_running_app().user.gender, 'age': App.get_running_app().user.age, 'license': App.get_running_app().user.license}, f)
+        user = App.get_running_app().user
+        os.makedirs('user_data', exist_ok=True)
 
+        ts = datetime.now().astimezone()
+        filename = f"{user.user_id}_{ts.strftime('%Y%m%d_%H%M%S')}.json"
+        path = os.path.join('user_data', filename)
+
+        with open(path, 'w') as f:
+            json.dump({
+                'user_id': user.user_id,
+                'gender': user.gender,
+                'age': user.age,
+                'license': user.license,
+                'player_exp': user.player_exp,
+                'coach_exp': user.coach_exp,
+                'watch_exp': user.watch_exp,
+                'saved_at': ts.isoformat(timespec='seconds')
+            }, f)
 
 
 class VideoPlayerScreen(Screen):
     current_rating = NumericProperty(None, allownone=True)       # Creativity
     technical_rating = NumericProperty(None, allownone=True)     # Technical correctness
     aesthetic_rating = NumericProperty(None, allownone=True)     # Aesthetic appeal
+    action_not_recognized = BooleanProperty(False)                          # Action not recognized
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -135,20 +151,22 @@ class VideoPlayerScreen(Screen):
         csv_paths = sorted(meta.glob("[!.]*.csv"))
         self.ls_matches = [p.stem for p in csv_paths]
         self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
+        # Pfad mit Dummies
         self.path_videos = '/Users/Esther/Desktop/creativity-rating-app-main/Videos'
+        # Pfad für Festplatte
+        #self.path_videos = '/Volumes/Elements/Sebastian_Spiele/Bundesliga/'
 
-        self.videos = [
-            os.path.join(self.path_videos, folder, file)
-            for folder in self.ls_matches
-            for file in os.listdir(os.path.join(self.path_videos, folder))
-            if file.endswith('.mp4')
-        ]
+        self.videos = []
+        base = os.path.abspath(self.path_videos)
+        for root, dirs, files in os.walk(self.path_videos):
+            if os.path.abspath(root) == base:
+                continue
+            for f in files:
+                if f.lower().endswith('.mp4'):
+                    self.videos.append(os.path.join(root, f))
 
         random.seed(42)
         random.shuffle(self.videos)
-
-    # optional: choose a subset of videos
-    # videos = videos[:10]
 
     def on_enter(self, *args):
         self.load_video()
@@ -156,7 +174,6 @@ class VideoPlayerScreen(Screen):
     def previous_video(self, instance):
         pass
 
-    # --- minimal neu: Set-Methoden für alle drei Skalen ---
     def set_likert(self, value):
         self.current_rating = int(value)
 
@@ -170,7 +187,8 @@ class VideoPlayerScreen(Screen):
         for btn_id in (
                 'r_m3', 'r_m2', 'r_m1', 'r_0', 'r_p1', 'r_p2', 'r_p3',
                 't_m3', 't_m2', 't_m1', 't_0', 't_p1', 't_p2', 't_p3',
-                'a_m3', 'a_m2', 'a_m1', 'a_0', 'a_p1', 'a_p2', 'a_p3'
+                'a_m3', 'a_m2', 'a_m1', 'a_0', 'a_p1', 'a_p2', 'a_p3',
+                'btn_notrec'
         ):
             if btn_id in self.ids:
                 self.ids[btn_id].state = 'normal'
@@ -178,49 +196,68 @@ class VideoPlayerScreen(Screen):
         self.current_rating = None
         self.technical_rating = None
         self.aesthetic_rating = None
-    # ------------------------------------------------------
+        self.action_not_recognized = False
+
+    def _rated_file_path(self, action_id: str) -> str:
+        user_id = App.get_running_app().user.user_id or 'unknown'
+        return os.path.join('user_ratings', f'{user_id}_{action_id}.json')
+
+    def _is_rated(self, action_id: str) -> bool:
+        return os.path.exists(self._rated_file_path(action_id))
 
     def load_video(self):
-        if self.index < len(self.videos):
+        while self.index < len(self.videos):
             video_file = self.videos[self.index]
-            action_id = video_file.split('/')[-1].replace('.mp4', '')
-            #self.ids.video_player.source = os.path.join(self.path_videos + '3895134/', video_file)
+            action_id = os.path.splitext(os.path.basename(video_file))[0]
+
+            user_id = App.get_running_app().user.user_id or 'unknown'
+            rated_path = os.path.join('user_ratings', f'{user_id}_{action_id}.json')
+            if os.path.exists(rated_path):
+                print(f"[INFO] Already rated by {user_id}: {action_id} — skipping.")
+                self.index += 1
+                continue
+
             self.ids.video_player.source = video_file
             self.ids.video_player.state = 'play'
 
             self.action_id = action_id
             row = self.metadata[self.metadata['id'] == str(self.action_id)]
 
-            # update metadata to be displayed above video
-            self.ids.team_label.text     = str(row.team.values[0])
-            self.ids.player_label.text   = str(row.player.values[0])
-            self.ids.type_label.text     = str(row.type.values[0])
-            self.ids.bodypart_label.text = str(row.iloc[0]["shot_body_part"] if pd.notna(row.iloc[0]["shot_body_part"]) else (row.iloc[0]["pass_body_part"] if pd.notna(row.iloc[0]["pass_body_part"]) else None))
+            if not row.empty:
+                self.ids.team_label.text = str(row.team.values[0])
+                self.ids.player_label.text = str(row.player.values[0])
+                self.ids.type_label.text = str(row.type.values[0])
+                self.ids.bodypart_label.text = str(
+                    row.iloc[0]["shot_body_part"] if pd.notna(row.iloc[0]["shot_body_part"])
+                    else (row.iloc[0]["pass_body_part"] if pd.notna(row.iloc[0]["pass_body_part"]) else '')
+                )
+            else:
+                self.ids.team_label.text = 'No Team'
+                self.ids.player_label.text = 'No Player'
+                self.ids.type_label.text = 'No Type'
+                self.ids.bodypart_label.text = ''
 
-            # Likert auf 0 setzen (alle drei)
             self.reset_likert()
-
-            # submit sichtbar
             self.ids.submit_button.opacity = 1
-
-            # nächstes Video
             self.index += 1
-        else:
-            self.ids.info_label.text = "No more videos to rate."
-            self.ids.video_player.opacity = 0
-            self.ids.submit_button.opacity = .5
+            return
+
+        self.ids.info_label.text = "No more videos to rate."
+        self.ids.video_player.opacity = 0
+        self.ids.submit_button.opacity = .5
 
 
     def submit_rating(self):
 
-        # Sperren des Submit Buttons wenn kein Kreativitätsrating ausgeführt wird
+        # Sperren des Submit Buttons, wenn keine Kreativität angegeben oder keiner der unteren Buttons angeklickt ist
         if self.current_rating is None:
             Popup(
                 title="no selection",
-                content=Label(text="Please rate the creativity."),
                 size_hint=(0.6, 0.3)
             ).open()
             return
+
+        os.makedirs('user_ratings', exist_ok=True)
 
         rating_creativity = self.current_rating
         rating_technical  = self.technical_rating
@@ -230,9 +267,10 @@ class VideoPlayerScreen(Screen):
             json.dump({
                 'user_id' : App.get_running_app().user.user_id,
                 'id': self.action_id,
-                'action_rating' : rating_creativity,         # bestehendes Feld
-                'technical_correctness': rating_technical,    # neu
-                'aesthetic_appeal': rating_aesthetic          # neu
+                'action_rating' : rating_creativity,
+                'technical_correctness': rating_technical,
+                'aesthetic_appeal': rating_aesthetic,
+                'action_not_recognized': self.action_not_recognized
             }, f)
 
         print(f"Ratings -> creativity: {rating_creativity}, technical: {rating_technical}, aesthetic: {rating_aesthetic}")

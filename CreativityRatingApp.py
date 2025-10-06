@@ -13,6 +13,7 @@ kivy.require("1.9.1")
 import random
 from pathlib import Path
 from datetime import datetime
+import duckdb
 
 
 
@@ -145,28 +146,47 @@ class VideoPlayerScreen(Screen):
         super().__init__(**kwargs)
         self.index = 0
 
-        # Load metadata from CSV
-        self.path_metadata = '/Users/Esther/Desktop/creativity-rating-app-main/meta_data'
-        meta = Path(self.path_metadata)
-        csv_paths = sorted(meta.glob("[!.]*.csv"))
-        self.ls_matches = [p.stem for p in csv_paths]
-        self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
+       
         # Pfad mit Dummies
-        self.path_videos = '/Users/Esther/Desktop/creativity-rating-app-main/Videos'
+        self.path_videos = '/home/max/drive/dshs/Creativity/code/creativity-rating-app/data/'
         # Pfad für Festplatte
         #self.path_videos = '/Volumes/Elements/Sebastian_Spiele/Bundesliga/'
 
-        self.videos = []
-        base = os.path.abspath(self.path_videos)
-        for root, dirs, files in os.walk(self.path_videos):
-            if os.path.abspath(root) == base:
-                continue
-            for f in files:
-                if f.lower().endswith('.mp4'):
-                    self.videos.append(os.path.join(root, f))
+        self.videos = [f for f in os.listdir(self.path_videos) if f.lower().endswith('.mp4')]
+        #base = os.path.abspath(self.path_videos)
+        #for root, dirs, files in os.walk(self.path_videos):
+        #    if os.path.abspath(root) == base:
+        #        continue
+        #    for f in files:
+        #        if f.lower().endswith('.mp4'):
+        #            self.videos.append(os.path.join(root, f))
+
+        print(self.videos)
 
         random.seed(42)
         random.shuffle(self.videos)
+
+        # Load metadata from CSV
+        #self.path_metadata = '/Users/Esther/Desktop/creativity-rating-app-main/meta_data'
+        #meta = Path(self.path_metadata)
+        #csv_paths = sorted(meta.glob("[!.]*.csv"))
+        #self.ls_matches = [p.stem for p in csv_paths]
+        #self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
+        
+        # Load metadata from DB
+        conn = duckdb.connect("/home/max/drive/dshs/Creativity/code/lsa-creativity/rating_study/statsbomb_event_data.duckdb")
+
+        # Convert list of match ids to comma-separated string
+        event_id_str = ', '.join(f"'{event_id.replace('.mp4', '')}'" for event_id in self.videos)
+
+        # build query using match id and action type strings
+        query = f"SELECT * FROM events WHERE id IN ({event_id_str})"
+
+        # fetch df for all actions from included videos
+        df_actions = conn.execute(query).fetchdf()
+
+        self.metadata = df_actions
+
 
     def on_enter(self, *args):
         self.load_video()
@@ -217,7 +237,7 @@ class VideoPlayerScreen(Screen):
                 self.index += 1
                 continue
 
-            self.ids.video_player.source = video_file
+            self.ids.video_player.source = os.path.join(self.path_videos, video_file)
             self.ids.video_player.state = 'play'
 
             self.action_id = action_id

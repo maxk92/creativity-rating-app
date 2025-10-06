@@ -1,4 +1,4 @@
 .vscode
 kivyCreativityEnv/
-data/
 .venv/
+*.mp4

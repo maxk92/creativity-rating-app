@@ -269,39 +269,39 @@
                 spacing: 6
                 ToggleButton:
                     id: r_m3
-                    text: '-3'
-                    group: 'likert7'
-                    on_state: root.set_likert(-3) if self.state == 'down' else None
-                ToggleButton:
-                    id: r_m2
-                    text: '-2'
-                    group: 'likert7'
-                    on_state: root.set_likert(-2) if self.state == 'down' else None
-                ToggleButton:
-                    id: r_m1
-                    text: '-1'
-                    group: 'likert7'
-                    on_state: root.set_likert(-1) if self.state == 'down' else None
-                ToggleButton:
-                    id: r_0
-                    text: '0'
-                    group: 'likert7'
-                    on_state: root.set_likert(0) if self.state == 'down' else None
-                ToggleButton:
-                    id: r_p1
                     text: '1'
                     group: 'likert7'
                     on_state: root.set_likert(1) if self.state == 'down' else None
                 ToggleButton:
-                    id: r_p2
+                    id: r_m2
                     text: '2'
                     group: 'likert7'
                     on_state: root.set_likert(2) if self.state == 'down' else None
                 ToggleButton:
-                    id: r_p3
+                    id: r_m1
                     text: '3'
                     group: 'likert7'
                     on_state: root.set_likert(3) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_0
+                    text: '4'
+                    group: 'likert7'
+                    on_state: root.set_likert(4) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_p1
+                    text: '5'
+                    group: 'likert7'
+                    on_state: root.set_likert(5) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_p2
+                    text: '6'
+                    group: 'likert7'
+                    on_state: root.set_likert(6) if self.state == 'down' else None
+                ToggleButton:
+                    id: r_p3
+                    text: '7'
+                    group: 'likert7'
+                    on_state: root.set_likert(7) if self.state == 'down' else None
 
             BoxLayout:
                 size_hint_y: .2
@@ -312,7 +312,7 @@
                 Label:
                     text: ''
                 Label:
-                    text: 'neutral'
+                    text: ''
                 Label:
                     text: ''
                 Label:
@@ -336,7 +336,7 @@
                 Label:
                     font_size: root.height/40
                     size_hint_x: None
-                    text: 'Technical correctness:'
+                    text: 'Technical Correctness:'
                     width: dp(220)
                     halign: 'left'
                     text_size: self.size
@@ -346,55 +346,55 @@
                 spacing: 6
                 ToggleButton:
                     id: t_m3
-                    text: '-3'
-                    group: 'likert7_tech'
-                    on_state: root.set_likert_tech(-3) if self.state == 'down' else None
-                ToggleButton:
-                    id: t_m2
-                    text: '-2'
-                    group: 'likert7_tech'
-                    on_state: root.set_likert_tech(-2) if self.state == 'down' else None
-                ToggleButton:
-                    id: t_m1
-                    text: '-1'
-                    group: 'likert7_tech'
-                    on_state: root.set_likert_tech(-1) if self.state == 'down' else None
-                ToggleButton:
-                    id: t_0
-                    text: '0'
-                    group: 'likert7_tech'
-                    on_state: root.set_likert_tech(0) if self.state == 'down' else None
-                ToggleButton:
-                    id: t_p1
                     text: '1'
                     group: 'likert7_tech'
                     on_state: root.set_likert_tech(1) if self.state == 'down' else None
                 ToggleButton:
-                    id: t_p2
+                    id: t_m2
                     text: '2'
                     group: 'likert7_tech'
                     on_state: root.set_likert_tech(2) if self.state == 'down' else None
                 ToggleButton:
-                    id: t_p3
+                    id: t_m1
                     text: '3'
                     group: 'likert7_tech'
                     on_state: root.set_likert_tech(3) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_0
+                    text: '4'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(4) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_p1
+                    text: '5'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(5) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_p2
+                    text: '6'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(6) if self.state == 'down' else None
+                ToggleButton:
+                    id: t_p3
+                    text: '7'
+                    group: 'likert7_tech'
+                    on_state: root.set_likert_tech(7) if self.state == 'down' else None
             BoxLayout:
                 size_hint_y: .2
                 Label:
-                    text: 'not correct'
+                    text: 'very low'
                 Label:
                     text: ''
                 Label:
                     text: ''
                 Label:
-                    text: 'neutral'
-                Label:
                     text: ''
                 Label:
                     text: ''
                 Label:
-                    text: 'correct'
+                    text: ''
+                Label:
+                    text: 'very high'
 
         ########## Abfrage aesthetic appeal ##########
         BoxLayout:
@@ -412,7 +412,7 @@
                 Label:
                     font_size: root.height/40
                     size_hint_x: None
-                    text: 'Aesthetic appeal:'
+                    text: 'Aesthetic Appeal:'
                     width: dp(220)
                     halign: 'left'
                     text_size: self.size
@@ -422,39 +422,39 @@
                 spacing: 6
                 ToggleButton:
                     id: a_m3
-                    text: '-3'
-                    group: 'likert7_aes'
-                    on_state: root.set_likert_aesthetic(-3) if self.state == 'down' else None
-                ToggleButton:
-                    id: a_m2
-                    text: '-2'
-                    group: 'likert7_aes'
-                    on_state: root.set_likert_aesthetic(-2) if self.state == 'down' else None
-                ToggleButton:
-                    id: a_m1
-                    text: '-1'
-                    group: 'likert7_aes'
-                    on_state: root.set_likert_aesthetic(-1) if self.state == 'down' else None
-                ToggleButton:
-                    id: a_0
-                    text: '0'
-                    group: 'likert7_aes'
-                    on_state: root.set_likert_aesthetic(0) if self.state == 'down' else None
-                ToggleButton:
-                    id: a_p1
                     text: '1'
                     group: 'likert7_aes'
                     on_state: root.set_likert_aesthetic(1) if self.state == 'down' else None
                 ToggleButton:
-                    id: a_p2
+                    id: a_m2
                     text: '2'
                     group: 'likert7_aes'
                     on_state: root.set_likert_aesthetic(2) if self.state == 'down' else None
                 ToggleButton:
-                    id: a_p3
+                    id: a_m1
                     text: '3'
                     group: 'likert7_aes'
                     on_state: root.set_likert_aesthetic(3) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_0
+                    text: '4'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(4) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_p1
+                    text: '5'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(5) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_p2
+                    text: '6'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(6) if self.state == 'down' else None
+                ToggleButton:
+                    id: a_p3
+                    text: '7'
+                    group: 'likert7_aes'
+                    on_state: root.set_likert_aesthetic(7) if self.state == 'down' else None
             BoxLayout:
                 size_hint_y: .2
                 Label:
@@ -464,7 +464,7 @@
                 Label:
                     text: ''
                 Label:
-                    text: 'neutral'
+                    text: ''
                 Label:
                     text: ''
                 Label:

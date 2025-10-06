@@ -9,13 +9,13 @@ from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideT
 from kivy.lang import Builder
 from kivy.uix.popup import Popup
 from kivy.properties import NumericProperty, BooleanProperty
-kivy.require("1.9.1")
 import random
 from pathlib import Path
 from datetime import datetime
 import duckdb
+import yaml
 
-
+kivy.require("1.9.1")
 
 class User:
     def __init__(self):
@@ -146,13 +146,14 @@ class VideoPlayerScreen(Screen):
         super().__init__(**kwargs)
         self.index = 0
 
+        with open('config.yaml', 'r') as file:
+            config_data = yaml.safe_load(file)
        
-        # Pfad mit Dummies
-        self.path_videos = '/Users/Esther/Desktop/creativity-rating-app-main/Videos'
-        # Pfad für Festplatte
-        #self.path_videos = '/Volumes/Elements/Sebastian_Spiele/Bundesliga/'
+        db_path = config_data['paths']['db_path']
+        self.path_videos = config_data['paths']['video_path']
 
         self.videos = [f for f in os.listdir(self.path_videos) if f.lower().endswith('.mp4')]
+        # allow nested folder structure for videos
         #base = os.path.abspath(self.path_videos)
         #for root, dirs, files in os.walk(self.path_videos):
         #    if os.path.abspath(root) == base:
@@ -160,8 +161,6 @@ class VideoPlayerScreen(Screen):
         #    for f in files:
         #        if f.lower().endswith('.mp4'):
         #            self.videos.append(os.path.join(root, f))
-
-        print(self.videos)
 
         random.seed(42)
         random.shuffle(self.videos)
@@ -174,7 +173,7 @@ class VideoPlayerScreen(Screen):
         #self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
     
         # Load metadata from DB
-        conn = duckdb.connect("/Users/Esther/Desktop/creativity-rating-app-main/statsbomb_event_data.duckdb")
+        conn = duckdb.connect(db_path)
 
         # Convert list of match ids to comma-separated string
         event_id_str = ', '.join(f"'{event_id.replace('.mp4', '')}'" for event_id in self.videos)
@@ -186,8 +185,6 @@ class VideoPlayerScreen(Screen):
         else:
             # leeres DF mit den Spalten, die später verwendet werden
             df_actions = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
-
-        self.metadata = df_actions
 
         self.metadata = df_actions
 

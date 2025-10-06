@@ -1,56 +1,61 @@
 ## To Dos
 
 ### Prio 1
-- ~~zusätzliche Infos im Questionnaire Screen~~
 
-  - ~~Erfahrung als Spieler:in (Jahren)~~
+-   ~~zusätzliche Infos im Questionnaire Screen~~
 
-  - ~~Erfahrung als Trainer:in (Jahren)~~
+    -   ~~Erfahrung als Spieler:in (Jahren)~~
 
-  - ~~Erfahrung beim Fußball schauen (Jahre)~~
+    -   ~~Erfahrung als Trainer:in (Jahren)~~
 
-- ~~möglicherweise zusätzliche Skalen für technical correctness, aesthetic appeal (2 zusätzliche Dimensionen)~~
+    -   ~~Erfahrung beim Fußball schauen (Jahre)~~
 
-- ~~Rating-Skala auf 7-Pkt-Likert: -3 bis 3 (inkl. 0)~~
+-   ~~möglicherweise zusätzliche Skalen für technical correctness, aesthetic appeal (2 zusätzliche Dimensionen)~~
 
-- ~~Regler von Slider auf Radar ändern (Auswahl anklicken können)~~
+-   ~~Rating-Skala auf 7-Pkt-Likert: -3 bis 3 (inkl. 0)~~
 
-- ~~Punkte beschriften mit "not creative" bis "very creative"~~
+-   ~~Regler von Slider auf Radar ändern (Auswahl anklicken können)~~
 
-<<<<<<< HEAD
-- ~~Bedingung des Weiterclickens an die Kreativitätsabfrage knüpfen~~
+-   ~~Punkte beschriften mit "not creative" bis "very creative"~~
 
-- ~~entfernen der Vorauswahl der Ratings~~
-=======
-- entfernen der Vorauswahl der Ratings
->>>>>>> 31a020c (Add files via upload)
+-   ~~Bedingung des Weiterclickens an die Kreativitätsabfrage knüpfen~~
 
--   config-file anlegen, in dem zentrale Konfigurationen geändert werden können (und in App geladen; potenziell in App Umstellung erlauben?)
+-   ~~entfernen der Vorauswahl der Ratings~~
 
-    -   Pfad für Videos
+-   ~~config-file anlegen, in dem zentrale Konfigurationen geändert werden können (und in App geladen; potenziell in App Umstellung erlauben?)~~
 
-    -   Pfad für Eventdaten
+    -   ~~Pfad für Videos~~
 
--   Funktionalität: merken, welcher User welche Videos gerated hat und Videos skippen, wenn schon gerated
+    -   ~~Pfad für Eventdaten~~
 
--   button “action occluded” hinzufügen
+-   ~~Funktionalität: merken, welcher User welche Videos gerated hat und Videos skippen, wenn schon gerated~~
 
--   button "action not recognized" hinzufügen
+-   ~~button “action occluded” hinzufügen~~
 
 ### Prio 2
 
+-   Bugfix: "Action not recognized" reicht nicht aus, um Rating submitten zu können
+
 -   App auf fullscreen starten
 
--   auf PC im SHK Raum zum Laufen bringen
-    -   macOS
+-   auf PC im SHK Raum zum Laufen bringen (macOS)
 
-    -   Windows
--   Eventdaten in Datenbank schreiben und aus DB laden, um alle Events zu haben?
+-   auf Server zum Laufen bringen und per SSH von jedem Rechner im Institut verbinden
+
+-   Schriftgröße für Labels auf Skalen erhöhen
+
+-   Instructions Page in App anpassen
+
+-   ~~Eventdaten in Datenbank schreiben und aus DB laden, um alle Events zu haben?~~
 
 ### Prio 3
 
 -   deutsch/englisch möglich
 
 -   Export/Sicherungskopie aller Ratings als CSV
+
+-   Schreiben der Ratings in DB
+
+-   DB zentral hosten und Zugriff über Web (oder NAS/Server?)
 
 -   mehr anzuzeigende Features der Aktion

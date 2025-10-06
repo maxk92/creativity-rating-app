@@ -148,7 +148,7 @@ class VideoPlayerScreen(Screen):
 
        
         # Pfad mit Dummies
-        self.path_videos = '/home/max/drive/dshs/Creativity/code/creativity-rating-app/data/'
+        self.path_videos = '/Users/Esther/Desktop/creativity-rating-app-main/Videos'
         # Pfad für Festplatte
         #self.path_videos = '/Volumes/Elements/Sebastian_Spiele/Bundesliga/'
 
@@ -172,18 +172,22 @@ class VideoPlayerScreen(Screen):
         #csv_paths = sorted(meta.glob("[!.]*.csv"))
         #self.ls_matches = [p.stem for p in csv_paths]
         #self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
-        
+    
         # Load metadata from DB
-        conn = duckdb.connect("/home/max/drive/dshs/Creativity/code/lsa-creativity/rating_study/statsbomb_event_data.duckdb")
+        conn = duckdb.connect("/Users/Esther/Desktop/creativity-rating-app-main/statsbomb_event_data.duckdb")
 
         # Convert list of match ids to comma-separated string
         event_id_str = ', '.join(f"'{event_id.replace('.mp4', '')}'" for event_id in self.videos)
 
-        # build query using match id and action type strings
-        query = f"SELECT * FROM events WHERE id IN ({event_id_str})"
-
         # fetch df for all actions from included videos
-        df_actions = conn.execute(query).fetchdf()
+        if event_id_str:  # << verhindert "IN ()"
+            query = f"SELECT * FROM events WHERE id IN ({event_id_str})"
+            df_actions = conn.execute(query).fetchdf()
+        else:
+            # leeres DF mit den Spalten, die später verwendet werden
+            df_actions = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
+
+        self.metadata = df_actions
 
         self.metadata = df_actions
 

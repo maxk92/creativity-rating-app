@@ -50,6 +50,16 @@
 
 ### Prio 3
 
+-   ReadME anpassen für andere User (Instructions for App use)
+
+-   App-Funktionalität generalisieren über config-file
+
+    -   andere Skalen erlauben (andere Likert, Slider)
+
+    -   andere Dimensionen/Labels erlauben
+
+    -   Anzahl Skalen ändern
+
 -   deutsch/englisch möglich
 
 -   Export/Sicherungskopie aller Ratings als CSV

@@ -1,3 +1,4 @@
 paths:
   db_path: "/home/max/drive/dshs/Creativity/code/lsa-creativity/rating_study/statsbomb_event_data.duckdb"
-  video_path: "/media/max/Elements/videos_all"
+  #video_path: "/media/max/Elements/videos_all"
+  video_path: "/home/max/drive/dshs/Creativity/code/creativity-rating-app/data/"

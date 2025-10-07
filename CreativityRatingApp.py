@@ -275,7 +275,7 @@ class VideoPlayerScreen(Screen):
     def submit_rating(self):
 
         # Sperren des Submit Buttons, wenn keine Kreativität angegeben oder keiner der unteren Buttons angeklickt ist
-        if self.current_rating is None:
+        if self.current_rating is None and not self.action_not_recognized:
             Popup(
                 title="no selection",
                 size_hint=(0.6, 0.3)

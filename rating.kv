@@ -66,7 +66,7 @@
 
         TextInput:
             font_size: root.height/30
-            hint_text: 'Erfahrung als Spieler:in (Jahren)'
+            hint_text: 'Experience as a player (years)'
             input_filter: 'int'
             size_hint_y: 0.10
             height: '48dp'
@@ -74,7 +74,7 @@
 
         TextInput:
             font_size: root.height/30
-            hint_text: 'Erfahrung als Trainer:in (Jahren)'
+            hint_text: 'Experience as a coach (years)'
             input_filter: 'int'
             size_hint_y: 0.10
             height: '48dp'
@@ -82,31 +82,7 @@
 
         TextInput:
             font_size: root.height/30
-            hint_text: 'Erfahrung beim Fußball schauen (Jahre)'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.watch_exp_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Erfahrung als Spieler:in (Jahren)'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.player_exp_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Erfahrung als Trainer:in (Jahren)'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.coach_exp_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Erfahrung beim Fußball schauen (Jahre)'
+            hint_text: 'Experience regularly watching soccer (years)'
             input_filter: 'int'
             size_hint_y: 0.10
             height: '48dp'
@@ -236,6 +212,7 @@
                 size_hint_x: .5
                 text: 'Previous Action'
                 on_release: root.previous_video(self)
+                disabled: True
             ToggleButton:
                 id: btn_notrec
                 font_size: root.height/40

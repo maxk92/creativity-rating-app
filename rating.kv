@@ -484,7 +484,7 @@
                 font_size: root.height/40
                 size_hint_x: 1.5
                 text: 'Submit Rating'
-                disabled: root.current_rating is None
+                disabled: (root.current_rating is None) and (not root.action_not_recognized)
                 opacity: 1 if not self.disabled else .5
                 on_release:
                     root.submit_rating()

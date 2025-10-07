@@ -163,7 +163,11 @@ class VideoPlayerScreen(Screen):
         #            self.videos.append(os.path.join(root, f))
 
         random.seed(42)
-        random.shuffle(self.videos)
+        ########################################################
+        #### !!!! wieder rein, wenn Pilotierung vorbei !!!! ####
+        ########################################################
+        
+        #random.shuffle(self.videos)
 
         # Load metadata from CSV
         #self.path_metadata = '/Users/Esther/Desktop/creativity-rating-app-main/meta_data'

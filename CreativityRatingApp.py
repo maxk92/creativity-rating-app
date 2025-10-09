@@ -226,14 +226,8 @@ class VideoPlayerScreen(Screen):
 
             db_path = config_data['paths']['db_path']
             self.path_videos = config_data['paths']['video_path']
-        except FileNotFoundError:
-            print("[ERROR] config.yaml not found. Using default paths.")
-            db_path = 'data/events.db'
-            self.path_videos = 'videos'
         except KeyError as e:
-            print(f"[ERROR] Missing key in config.yaml: {e}. Using default paths.")
-            db_path = 'data/events.db'
-            self.path_videos = 'videos'
+            print(f"[ERROR] Missing key in config.yaml: {e}.")
 
         # Get list of all MP4 files in the video directory
         try:
@@ -263,7 +257,7 @@ class VideoPlayerScreen(Screen):
                 df_actions = conn.execute(query).fetchdf()
             else:
                 # Create empty DataFrame with expected columns if no videos found
-                df_actions = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "shot_body_part", "pass_body_part"])
+                df_actions = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "body_part", "start_x", "start_y", "end_x", "end_y"])
 
             self.metadata = df_actions
 
@@ -272,7 +266,7 @@ class VideoPlayerScreen(Screen):
         except Exception as e:
             print(f"[ERROR] Failed to load metadata from database: {e}")
             # Create empty DataFrame as fallback
-            self.metadata = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "shot_body_part", "pass_body_part"])
+            self.metadata = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "body_part", "start_x", "start_y", "end_x", "end_y"])
 
 
     def on_enter(self, *args):
@@ -372,19 +366,18 @@ class VideoPlayerScreen(Screen):
             if not row.empty:
                 self.ids.team_label.text = str(row.team.values[0])
                 self.ids.player_label.text = str(row.player.values[0])
-                self.ids.jerseynumber_label.text = f"Number: {str(row.jersey_number.values[0])}"
+                #self.ids.jerseynumber_label.text = f"Number: {str(row.jersey_number.values[0])}"
+                self.ids.jerseynumber_label.text = "Number:"
                 self.ids.type_label.text = str(row.type.values[0])
+
                 # Display body part (prioritize shot_body_part, fallback to pass_body_part)
-                self.ids.bodypart_label.text = str(
-                    row.iloc[0]["shot_body_part"] if pd.notna(row.iloc[0]["shot_body_part"])
-                    else (row.iloc[0]["pass_body_part"] if pd.notna(row.iloc[0]["pass_body_part"]) else '')
-                )
+                self.ids.bodypart_label.text = str(row.bodypart.values[0]) 
 
                 # Store trajectory coordinates as instance variables
-                self.start_x = 10  # Change when coordinates are properly available from DB
-                self.start_y = 10
-                self.end_x = 90
-                self.end_y = 10
+                self.start_x = row.start_x.values[0]
+                self.start_y = row.start_y.values[0]
+                self.end_x = row.end_x.values[0]
+                self.end_y = row.end_y.values[0]
             else:
                 # Display placeholder text if no metadata found
                 self.ids.team_label.text = 'No Team'

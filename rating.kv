@@ -229,14 +229,13 @@
 
             VideoPlayer:
                 id: video_player
-                size_hint_x: .7
+                size_hint_x: .65
                 source: ''
                 state: 'stop'
                 options: {'eos': 'loop'}
                 allow_stretch: True
             BoxLayout:
-                id: plot_container
-                size_hint_x: .3
+                size_hint_x: .35
                 orientation: 'vertical'
                 canvas.before:
                     Color:
@@ -244,6 +243,13 @@
                     Rectangle:
                         pos: self.pos
                         size: self.size
+                BoxLayout:
+                    id: plot_container
+                    size_hint_y: None
+                    height: self.parent.width * 0.67  # Maintain aspect ratio
+                    orientation: 'vertical'
+                Widget:
+                    # Spacer to push plot to top
         Label:
             id: info_label
             size_hint_y: .05

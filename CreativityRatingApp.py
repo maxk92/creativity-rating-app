@@ -242,7 +242,7 @@ class VideoPlayerScreen(Screen):
         # Shuffle videos for randomization (currently disabled for pilot phase)
         random.seed(42)
         ########################################################
-        #### !!!! wieder rein, wenn Pilotierung vorbei !!!! ####
+        #### TODO: Re-enable after pilot phase is complete ####
         ########################################################
 
         #random.shuffle(self.videos)
@@ -260,7 +260,7 @@ class VideoPlayerScreen(Screen):
                 df_actions = conn.execute(query).fetchdf()
             else:
                 # Create empty DataFrame with expected columns if no videos found
-                df_actions = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
+                df_actions = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "shot_body_part", "pass_body_part"])
 
             self.metadata = df_actions
 
@@ -269,7 +269,7 @@ class VideoPlayerScreen(Screen):
         except Exception as e:
             print(f"[ERROR] Failed to load metadata from database: {e}")
             # Create empty DataFrame as fallback
-            self.metadata = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
+            self.metadata = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "shot_body_part", "pass_body_part"])
 
 
     def on_enter(self, *args):
@@ -366,6 +366,7 @@ class VideoPlayerScreen(Screen):
             if not row.empty:
                 self.ids.team_label.text = str(row.team.values[0])
                 self.ids.player_label.text = str(row.player.values[0])
+                self.ids.jerseynumber_label.text = str(row.jersey_number.values[0])
                 self.ids.type_label.text = str(row.type.values[0])
                 # Display body part (prioritize shot_body_part, fallback to pass_body_part)
                 self.ids.bodypart_label.text = str(

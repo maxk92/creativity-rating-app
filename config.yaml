@@ -2,10 +2,10 @@ paths:
   db_path: "/home/max/drive/dshs/Creativity/code/lsa-creativity/rating_study/statsbomb_event_data.duckdb"
   
   # path to external drive on Linux
-  video_path: "/media/max/Elements/videos_events_sample"
+  #video_path: "/media/max/Elements/videos_events_sample"
   
   # path to external drive on macOS
   #video_path: "/Volumes/Elements/videos_all"
   
   # dummy videos on localhost max
-  #video_path: "/home/max/drive/dshs/Creativity/code/creativity-rating-app/data/"
+  video_path: "/home/max/drive/dshs/Creativity/code/creativity-rating-app/videos_all/"

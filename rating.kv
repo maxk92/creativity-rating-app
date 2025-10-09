@@ -13,13 +13,11 @@
             size_hint_y: 0.15
             Button:
                 font_size: root.height/40
-                font_size: root.height/40
                 text: 'Back'
                 # This button does nothing for now, just a placeholder
                 on_release: app.root.current = 'welcome'
                 opacity: .5 # Make invisible as it's just a placeholder
             Button:
-                font_size: root.height/40
                 font_size: root.height/40
                 text: 'Next'
                 on_release: app.root.current = 'questionnaire'
@@ -60,6 +58,7 @@
         TextInput:
             font_size: root.height/30
             hint_text: 'Enter your age'
+            input_filter: 'int'
             size_hint_y: 0.10
             height: '48dp'
             on_text: root.age_input(self, self.text)
@@ -118,29 +117,54 @@
 
         TextInput:
             font_size: root.height/30
-            hint_text: "Enter the first two letters of your father's first name"
+            hint_text: "First two letters of mother's given name"
             size_hint_y: 0.10
             height: '48dp'
-            on_text: root.id_input_1(self, self.text)
+            max_length: 2
+            on_text: root.mother_initials_input(self, self.text)
 
         TextInput:
             font_size: root.height/30
-            hint_text: "Enter the last two letters of your mother's first name"
+            hint_text: "First two letters of father's given name"
             size_hint_y: 0.10
             height: '48dp'
-            on_text: root.id_input_2(self, self.text)
+            max_length: 2
+            on_text: root.father_initials_input(self, self.text)
 
         TextInput:
             font_size: root.height/30
-            hint_text: "Enter the sum of your birthdate (day+month). E.g. 12th of April: 12+4=26"
+            hint_text: "Number of siblings"
+            input_filter: 'int'
             size_hint_y: 0.10
             height: '48dp'
-            on_text: root.id_input_3(self, self.text)
+            on_text: root.siblings_input(self, self.text)
 
-            on_text: root.id_input_3(self, self.text)
+        BoxLayout:
+            size_hint_y: 0.10
+            height: '48dp'
+            spacing: 5
+            Label:
+                font_size: root.height/40
+                text: 'Birthday:'
+                size_hint_x: 0.3
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Day'
+                input_filter: 'int'
+                on_text: root.birth_day_input(self, self.text)
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Month'
+                input_filter: 'int'
+                on_text: root.birth_month_input(self, self.text)
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Year'
+                input_filter: 'int'
+                on_text: root.birth_year_input(self, self.text)
 
         Label:
-            size_hint_y: 0.45
+            size_hint_y: 0.25
             text: ''
 
         BoxLayout:
@@ -455,7 +479,7 @@
                 font_size: root.height/40
                 size_hint_x: .5
                 text: 'Back to User data'
-                on_release: app.root.current = 'questionnaire'
+                on_release: root.confirm_back_to_questionnaire()
             Button:
                 id: submit_button
                 font_size: root.height/40

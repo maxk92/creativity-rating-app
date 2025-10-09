@@ -1,10 +1,18 @@
+"""
+Creativity Rating App
+A Kivy application for rating the creativity, technical correctness, and aesthetic appeal
+of soccer actions from video clips.
+"""
+
 import kivy
 import pandas as pd
 import os
-os.environ['KIVY_VIDEO'] = 'ffpyplayer'
+os.environ['KIVY_VIDEO'] = 'ffpyplayer'  # Use ffpyplayer for video playback
 import json
 from kivy.app import App
 from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, CardTransition, SwapTransition, WipeTransition, FallOutTransition
 from kivy.lang import Builder
 from kivy.uix.popup import Popup
@@ -18,6 +26,11 @@ import yaml
 kivy.require("1.9.1")
 
 class User:
+    """
+    Stores demographic and experience data for a user/rater.
+    User ID is constructed from parent name initials, birthdate, birth year, and siblings.
+    Formula: mother_initials + father_initials + (day+month) + (cross_sum_of_year * (siblings+1))
+    """
     def __init__(self):
         self.user_id = ''
         self.gender = 'Not specified'
@@ -26,17 +39,38 @@ class User:
         self.coach_exp = 0
         self.watch_exp = 0
         self.license = 'Not specified'
-        self.id_part1 = ''
-        self.id_part2 = ''
-        self.id_part3 = ''
+        # User ID components
+        self.mother_initials = ''  # First two letters of mother's given name
+        self.father_initials = ''  # First two letters of father's given name
+        self.siblings = 0          # Number of siblings
+        self.birth_day = 0         # Day of birth
+        self.birth_month = 0       # Month of birth
+        self.birth_year = 0        # Year of birth
+
+    def _calculate_cross_sum(self, number):
+        """Calculate the cross sum (sum of digits) of a number."""
+        return sum(int(digit) for digit in str(abs(number)))
 
     def set_user_id(self):
-        preliminary_input = self.id_part1 + self.id_part2 + self.id_part3
-
-        if preliminary_input == '':
+        """
+        Generate user_id from components.
+        Format: mother_initials + father_initials + (day+month) + (cross_sum_year * (siblings+1))
+        """
+        if not self.mother_initials or not self.father_initials:
             self.user_id = 'unknown'
-        else:
-            self.user_id = preliminary_input
+            return
+
+        # Calculate day+month sum
+        date_sum = self.birth_day + self.birth_month
+
+        # Calculate cross sum of birth year
+        year_cross_sum = self._calculate_cross_sum(self.birth_year)
+
+        # Calculate final component: cross_sum * (siblings + 1)
+        sibling_factor = year_cross_sum * (self.siblings + 1)
+
+        # Concatenate all parts
+        self.user_id = f"{self.mother_initials}{self.father_initials}{date_sum}{sibling_factor}"
 
     def set_user_age(self, age):
         self.age = age
@@ -50,15 +84,6 @@ class User:
     def set_watch_exp(self, years):
         self.watch_exp = years
 
-    def set_user_player_exp(self, years):
-        return self.set_player_exp(years)
-
-    def set_user_coach_exp(self, years):
-        return self.set_coach_exp(years)
-
-    def set_user_watch_exp(self, years):
-        return self.set_watch_exp(years)
-
     def set_user_license(self, license):
         self.license = license
 
@@ -66,20 +91,18 @@ class User:
         self.gender = gender
 
 
-class Action:
-    def __init__(self, id, video_path, metadata, rating=0):
-        self.id = id
-        self.video_path = video_path
-        self.metadata = metadata
-        self.rating = rating
-
-
 class WelcomeScreen(Screen):
+    """Initial welcome screen of the app."""
     pass
 
 class QuestionnaireScreen(Screen):
+    """
+    Screen for collecting user demographic and experience information.
+    Captures gender, age, soccer experience (as player, coach, watcher), and license info.
+    """
 
     def gender_clicked(self, instance, value, gender):
+        """Handle gender button click (when button is pressed down)."""
         if value == "down":
             App.get_running_app().user.set_user_gender(gender)
 
@@ -87,128 +110,219 @@ class QuestionnaireScreen(Screen):
         App.get_running_app().user.set_user_age(value)
 
     def player_exp_input(self, instance, value):
-        App.get_running_app().user.set_user_player_exp(value)
+        App.get_running_app().user.set_player_exp(value)
 
     def coach_exp_input(self, instance, value):
-        App.get_running_app().user.set_user_coach_exp(value)
+        App.get_running_app().user.set_coach_exp(value)
 
     def watch_exp_input(self, instance, value):
-        App.get_running_app().user.set_user_watch_exp(value)
+        App.get_running_app().user.set_watch_exp(value)
 
-    def id_input_1(self, instance, value):
-        App.get_running_app().user.id_part1 = value.lower()
-        App.get_running_app().user.set_user_id()
+    def mother_initials_input(self, instance, value):
+        """Handle mother's initials input (first two letters, converted to lowercase)."""
+        user = App.get_running_app().user
+        user.mother_initials = value[:2].lower()  # Take only first 2 characters
+        user.set_user_id()
 
-    def id_input_2(self, instance, value):
-        App.get_running_app().user.id_part2 = value.lower()
-        App.get_running_app().user.set_user_id()
+    def father_initials_input(self, instance, value):
+        """Handle father's initials input (first two letters, converted to lowercase)."""
+        user = App.get_running_app().user
+        user.father_initials = value[:2].lower()  # Take only first 2 characters
+        user.set_user_id()
 
-    def id_input_3(self, instance, value):
-        if len(str(value)) == 1:
-            value = '0' + str(value)
-        else:
-            value = str(value)
-        App.get_running_app().user.id_part3 = value
-        App.get_running_app().user.set_user_id()
+    def siblings_input(self, instance, value):
+        """Handle number of siblings input."""
+        user = App.get_running_app().user
+        try:
+            user.siblings = int(value) if value else 0
+        except ValueError:
+            user.siblings = 0
+        user.set_user_id()
+
+    def birth_day_input(self, instance, value):
+        """Handle birth day input."""
+        user = App.get_running_app().user
+        try:
+            user.birth_day = int(value) if value else 0
+        except ValueError:
+            user.birth_day = 0
+        user.set_user_id()
+
+    def birth_month_input(self, instance, value):
+        """Handle birth month input."""
+        user = App.get_running_app().user
+        try:
+            user.birth_month = int(value) if value else 0
+        except ValueError:
+            user.birth_month = 0
+        user.set_user_id()
+
+    def birth_year_input(self, instance, value):
+        """Handle birth year input."""
+        user = App.get_running_app().user
+        try:
+            user.birth_year = int(value) if value else 0
+        except ValueError:
+            user.birth_year = 0
+        user.set_user_id()
 
     def license_clicked(self, instance, value, license):
         if value == "down":
             App.get_running_app().user.set_user_license(license)
 
     def save_user_data(self):
-        user = App.get_running_app().user
-        os.makedirs('user_data', exist_ok=True)
+        """
+        Save user demographic data to a timestamped JSON file.
+        Creates user_data directory if it doesn't exist.
+        """
+        try:
+            user = App.get_running_app().user
+            os.makedirs('user_data', exist_ok=True)
 
-        ts = datetime.now().astimezone()
-        filename = f"{user.user_id}_{ts.strftime('%Y%m%d_%H%M%S')}.json"
-        path = os.path.join('user_data', filename)
+            ts = datetime.now().astimezone()
+            filename = f"{user.user_id}_{ts.strftime('%Y%m%d_%H%M%S')}.json"
+            path = os.path.join('user_data', filename)
 
-        with open(path, 'w') as f:
-            json.dump({
-                'user_id': user.user_id,
-                'gender': user.gender,
-                'age': user.age,
-                'license': user.license,
-                'player_exp': user.player_exp,
-                'coach_exp': user.coach_exp,
-                'watch_exp': user.watch_exp,
-                'saved_at': ts.isoformat(timespec='seconds')
-            }, f)
+            with open(path, 'w') as f:
+                json.dump({
+                    'user_id': user.user_id,
+                    'gender': user.gender,
+                    'age': user.age,
+                    'license': user.license,
+                    'player_exp': user.player_exp,
+                    'coach_exp': user.coach_exp,
+                    'watch_exp': user.watch_exp,
+                    'saved_at': ts.isoformat(timespec='seconds')
+                }, f)
+            print(f"[INFO] User data saved: {filename}")
+        except Exception as e:
+            print(f"[ERROR] Failed to save user data: {e}")
 
 
 class VideoPlayerScreen(Screen):
+    """
+    Main screen for video playback and rating collection.
+    Displays soccer action videos and collects ratings on three dimensions:
+    creativity, technical correctness, and aesthetic appeal.
+    Also allows marking actions as "not recognized".
+    """
+    # Kivy properties for tracking ratings (7-point Likert scale: 1-7)
     current_rating = NumericProperty(None, allownone=True)       # Creativity
     technical_rating = NumericProperty(None, allownone=True)     # Technical correctness
     aesthetic_rating = NumericProperty(None, allownone=True)     # Aesthetic appeal
-    action_not_recognized = BooleanProperty(False)                          # Action not recognized
+    action_not_recognized = BooleanProperty(False)               # Action not recognized
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.index = 0
+        self.index = 0  # Current video index
 
-        with open('config.yaml', 'r') as file:
-            config_data = yaml.safe_load(file)
-       
-        db_path = config_data['paths']['db_path']
-        self.path_videos = config_data['paths']['video_path']
+        try:
+            # Load configuration from YAML file
+            with open('config.yaml', 'r') as file:
+                config_data = yaml.safe_load(file)
 
-        self.videos = [f for f in os.listdir(self.path_videos) if f.lower().endswith('.mp4')]
-        # allow nested folder structure for videos
-        #base = os.path.abspath(self.path_videos)
-        #for root, dirs, files in os.walk(self.path_videos):
-        #    if os.path.abspath(root) == base:
-        #        continue
-        #    for f in files:
-        #        if f.lower().endswith('.mp4'):
-        #            self.videos.append(os.path.join(root, f))
+            db_path = config_data['paths']['db_path']
+            self.path_videos = config_data['paths']['video_path']
+        except FileNotFoundError:
+            print("[ERROR] config.yaml not found. Using default paths.")
+            db_path = 'data/events.db'
+            self.path_videos = 'videos'
+        except KeyError as e:
+            print(f"[ERROR] Missing key in config.yaml: {e}. Using default paths.")
+            db_path = 'data/events.db'
+            self.path_videos = 'videos'
 
+        # Get list of all MP4 files in the video directory
+        try:
+            self.videos = [f for f in os.listdir(self.path_videos) if f.lower().endswith('.mp4')]
+        except FileNotFoundError:
+            print(f"[ERROR] Video directory not found: {self.path_videos}")
+            self.videos = []
+
+        # Shuffle videos for randomization (currently disabled for pilot phase)
         random.seed(42)
         ########################################################
         #### !!!! wieder rein, wenn Pilotierung vorbei !!!! ####
         ########################################################
-        
+
         #random.shuffle(self.videos)
 
-        # Load metadata from CSV
-        #self.path_metadata = '/Users/Esther/Desktop/creativity-rating-app-main/meta_data'
-        #meta = Path(self.path_metadata)
-        #csv_paths = sorted(meta.glob("[!.]*.csv"))
-        #self.ls_matches = [p.stem for p in csv_paths]
-        #self.metadata = pd.concat([pd.read_csv(p) for p in csv_paths], ignore_index=True)
-    
-        # Load metadata from DB
-        conn = duckdb.connect(db_path)
+        # Load metadata from DuckDB database
+        try:
+            conn = duckdb.connect(db_path)
 
-        # Convert list of match ids to comma-separated string
-        event_id_str = ', '.join(f"'{event_id.replace('.mp4', '')}'" for event_id in self.videos)
+            # Convert list of video filenames to event IDs (removing .mp4 extension)
+            event_id_str = ', '.join(f"'{event_id.replace('.mp4', '')}'" for event_id in self.videos)
 
-        # fetch df for all actions from included videos
-        if event_id_str:  # << verhindert "IN ()"
-            query = f"SELECT * FROM events WHERE id IN ({event_id_str})"
-            df_actions = conn.execute(query).fetchdf()
-        else:
-            # leeres DF mit den Spalten, die später verwendet werden
-            df_actions = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
+            # Fetch metadata for all actions from included videos
+            if event_id_str:  # Prevents empty "IN ()" clause
+                query = f"SELECT * FROM events WHERE id IN ({event_id_str})"
+                df_actions = conn.execute(query).fetchdf()
+            else:
+                # Create empty DataFrame with expected columns if no videos found
+                df_actions = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
 
-        self.metadata = df_actions
+            self.metadata = df_actions
+
+            # Close database connection to prevent resource leak
+            conn.close()
+        except Exception as e:
+            print(f"[ERROR] Failed to load metadata from database: {e}")
+            # Create empty DataFrame as fallback
+            self.metadata = pd.DataFrame(columns=["id", "team", "player", "type", "shot_body_part", "pass_body_part"])
 
 
     def on_enter(self, *args):
+        """Called when this screen is displayed. Loads the first/next video."""
         self.load_video()
 
     def previous_video(self, instance):
+        """Placeholder for going back to previous video (not implemented)."""
         pass
 
+    def confirm_back_to_questionnaire(self):
+        """Show confirmation dialog before navigating back to questionnaire."""
+        content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+        content.add_widget(Label(text='Are you sure you want to go back?\nAny unsaved ratings will be lost.'))
+
+        button_layout = BoxLayout(spacing=10, size_hint_y=0.3)
+
+        popup = Popup(title='Confirm Navigation', content=content, size_hint=(0.7, 0.4))
+
+        cancel_btn = Button(text='Cancel')
+        cancel_btn.bind(on_release=popup.dismiss)
+
+        confirm_btn = Button(text='Go Back')
+        confirm_btn.bind(on_release=lambda x: self._navigate_back(popup))
+
+        button_layout.add_widget(cancel_btn)
+        button_layout.add_widget(confirm_btn)
+        content.add_widget(button_layout)
+
+        popup.open()
+
+    def _navigate_back(self, popup):
+        """Navigate back to questionnaire and close popup."""
+        popup.dismiss()
+        App.get_running_app().root.current = 'questionnaire'
+
     def set_likert(self, value):
+        """Set the creativity rating value."""
         self.current_rating = int(value)
 
     def set_likert_tech(self, value):
+        """Set the technical correctness rating value."""
         self.technical_rating = int(value)
 
     def set_likert_aesthetic(self, value):
+        """Set the aesthetic appeal rating value."""
         self.aesthetic_rating = int(value)
 
     def reset_likert(self):
+        """
+        Reset all rating buttons to their default state and clear all ratings.
+        Called before loading a new video.
+        """
         for btn_id in (
                 'r_m3', 'r_m2', 'r_m1', 'r_0', 'r_p1', 'r_p2', 'r_p3',
                 't_m3', 't_m2', 't_m1', 't_0', 't_p1', 't_p2', 't_p3',
@@ -223,18 +337,17 @@ class VideoPlayerScreen(Screen):
         self.aesthetic_rating = None
         self.action_not_recognized = False
 
-    def _rated_file_path(self, action_id: str) -> str:
-        user_id = App.get_running_app().user.user_id or 'unknown'
-        return os.path.join('user_ratings', f'{user_id}_{action_id}.json')
-
-    def _is_rated(self, action_id: str) -> bool:
-        return os.path.exists(self._rated_file_path(action_id))
-
     def load_video(self):
+        """
+        Load the next unrated video for the current user.
+        Skips videos that have already been rated. Displays metadata about the action
+        (team, player, type, body part). When all videos are rated, displays a message.
+        """
         while self.index < len(self.videos):
             video_file = self.videos[self.index]
             action_id = os.path.splitext(os.path.basename(video_file))[0]
 
+            # Skip videos already rated by this user
             user_id = App.get_running_app().user.user_id or 'unknown'
             rated_path = os.path.join('user_ratings', f'{user_id}_{action_id}.json')
             if os.path.exists(rated_path):
@@ -242,9 +355,11 @@ class VideoPlayerScreen(Screen):
                 self.index += 1
                 continue
 
+            # Load video and start playback
             self.ids.video_player.source = os.path.join(self.path_videos, video_file)
             self.ids.video_player.state = 'play'
 
+            # Load and display metadata for this action
             self.action_id = action_id
             row = self.metadata[self.metadata['id'] == str(self.action_id)]
 
@@ -252,11 +367,13 @@ class VideoPlayerScreen(Screen):
                 self.ids.team_label.text = str(row.team.values[0])
                 self.ids.player_label.text = str(row.player.values[0])
                 self.ids.type_label.text = str(row.type.values[0])
+                # Display body part (prioritize shot_body_part, fallback to pass_body_part)
                 self.ids.bodypart_label.text = str(
                     row.iloc[0]["shot_body_part"] if pd.notna(row.iloc[0]["shot_body_part"])
                     else (row.iloc[0]["pass_body_part"] if pd.notna(row.iloc[0]["pass_body_part"]) else '')
                 )
             else:
+                # Display placeholder text if no metadata found
                 self.ids.team_label.text = 'No Team'
                 self.ids.player_label.text = 'No Player'
                 self.ids.type_label.text = 'No Type'
@@ -267,48 +384,69 @@ class VideoPlayerScreen(Screen):
             self.index += 1
             return
 
+        # All videos have been rated
         self.ids.info_label.text = "No more videos to rate."
         self.ids.video_player.opacity = 0
         self.ids.submit_button.opacity = .5
 
 
     def submit_rating(self):
-
-        # Sperren des Submit Buttons, wenn keine Kreativität angegeben oder keiner der unteren Buttons angeklickt ist
+        """
+        Save the current ratings to a JSON file and load the next video.
+        Validates that either a creativity rating is provided or 'not recognized' is checked.
+        """
+        # Block submission if no creativity rating is given and action not marked as unrecognized
         if self.current_rating is None and not self.action_not_recognized:
             Popup(
-                title="no selection",
+                title="No Selection",
+                content=Label(text="Please rate the creativity or mark the action as not recognized."),
                 size_hint=(0.6, 0.3)
             ).open()
             return
 
-        os.makedirs('user_ratings', exist_ok=True)
+        try:
+            os.makedirs('user_ratings', exist_ok=True)
 
-        rating_creativity = self.current_rating
-        rating_technical  = self.technical_rating
-        rating_aesthetic  = self.aesthetic_rating
+            rating_creativity = self.current_rating
+            rating_technical  = self.technical_rating
+            rating_aesthetic  = self.aesthetic_rating
 
-        with open('user_ratings/' + str(App.get_running_app().user.user_id) + '_' + str(self.action_id)+'.json', 'w') as f:
-            json.dump({
-                'user_id' : App.get_running_app().user.user_id,
-                'id': self.action_id,
-                'action_rating' : rating_creativity,
-                'technical_correctness': rating_technical,
-                'aesthetic_appeal': rating_aesthetic,
-                'action_not_recognized': self.action_not_recognized
-            }, f)
+            # Save rating data to a JSON file named: {user_id}_{action_id}.json
+            filename = os.path.join('user_ratings', f"{App.get_running_app().user.user_id}_{self.action_id}.json")
+            with open(filename, 'w') as f:
+                json.dump({
+                    'user_id' : App.get_running_app().user.user_id,
+                    'id': self.action_id,
+                    'action_rating' : rating_creativity,
+                    'technical_correctness': rating_technical,
+                    'aesthetic_appeal': rating_aesthetic,
+                    'action_not_recognized': self.action_not_recognized
+                }, f)
 
-        print(f"Ratings -> creativity: {rating_creativity}, technical: {rating_technical}, aesthetic: {rating_aesthetic}")
-        self.load_video()
+            print(f"Ratings -> creativity: {rating_creativity}, technical: {rating_technical}, aesthetic: {rating_aesthetic}")
+            self.load_video()
+        except Exception as e:
+            print(f"[ERROR] Failed to save rating: {e}")
+            Popup(
+                title="Error",
+                content=Label(text=f"Failed to save rating: {e}"),
+                size_hint=(0.6, 0.3)
+            ).open()
 
 
 
 class RatingApp(App):
+    """
+    Main application class for the Creativity Rating App.
+    Manages the User object and creates the screen manager with three screens:
+    welcome, questionnaire, and videoplayer.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.user = User()
+        self.user = User()  # Create a User instance shared across all screens
 
     def build(self):
+        """Build and return the main screen manager with all screens."""
         screen_manager = ScreenManager(transition=FadeTransition())
 
         screen_manager.add_widget(WelcomeScreen(name = "welcome"))

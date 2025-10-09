@@ -22,6 +22,9 @@ from pathlib import Path
 from datetime import datetime
 import duckdb
 import yaml
+from kivy_garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+import matplotlib.pyplot as plt
+import mplsoccer
 
 kivy.require("1.9.1")
 
@@ -337,6 +340,9 @@ class VideoPlayerScreen(Screen):
         self.aesthetic_rating = None
         self.action_not_recognized = False
 
+
+
+
     def load_video(self):
         """
         Load the next unrated video for the current user.
@@ -366,19 +372,59 @@ class VideoPlayerScreen(Screen):
             if not row.empty:
                 self.ids.team_label.text = str(row.team.values[0])
                 self.ids.player_label.text = str(row.player.values[0])
-                self.ids.jerseynumber_label.text = str(row.jersey_number.values[0])
+                self.ids.jerseynumber_label.text = f"Number: {str(row.jersey_number.values[0])}"
                 self.ids.type_label.text = str(row.type.values[0])
                 # Display body part (prioritize shot_body_part, fallback to pass_body_part)
                 self.ids.bodypart_label.text = str(
                     row.iloc[0]["shot_body_part"] if pd.notna(row.iloc[0]["shot_body_part"])
                     else (row.iloc[0]["pass_body_part"] if pd.notna(row.iloc[0]["pass_body_part"]) else '')
                 )
+
+                # Store trajectory coordinates as instance variables
+                self.start_x = 10  # Change when coordinates are properly available from DB
+                self.start_y = 10
+                self.end_x = 90
+                self.end_y = 10
             else:
                 # Display placeholder text if no metadata found
                 self.ids.team_label.text = 'No Team'
                 self.ids.player_label.text = 'No Player'
                 self.ids.type_label.text = 'No Type'
                 self.ids.bodypart_label.text = ''
+
+                # Default coordinates if no metadata
+                self.start_x = 10
+                self.start_y = 10
+                self.end_x = 90
+                self.end_y = 10
+
+            # Clear previous plot
+            self.ids.plot_container.clear_widgets()
+
+            # Create pitch and draw trajectory
+            pitch = mplsoccer.Pitch(pitch_type="statsbomb", pitch_color="grass")
+            fig, ax = pitch.draw(figsize=(6, 4))
+
+            # Make figure background transparent/black
+            fig.patch.set_facecolor('black')
+            fig.patch.set_alpha(1)
+
+            # Draw arrow from start to end position
+            pitch.arrows(self.start_x, self.start_y, self.end_x, self.end_y,
+                        ax=ax, color="blue", width=2, headwidth=10, headlength=5)
+
+            # Optionally add markers at start and end
+            ax.plot(self.start_x, self.start_y, 'o', color='blue', markersize=10, label='Start')
+
+            # Remove white padding
+            fig.tight_layout(pad=0)
+            fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+            # Add canvas to Kivy
+            canvas = FigureCanvasKivyAgg(fig)
+            self.ids.plot_container.add_widget(canvas)
+
+            plt.close(fig)  # Prevent memory leak
 
             self.reset_likert()
             self.ids.submit_button.opacity = 1

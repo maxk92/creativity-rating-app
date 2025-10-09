@@ -2,3 +2,7 @@
 kivyCreativityEnv/
 .venv/
 *.mp4
+
+# User-generated data directories
+user_data/
+user_ratings/

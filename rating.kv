@@ -218,31 +218,67 @@
                 font_size: root.height/40
                 text: 'No Bodypart'
                 bold: True
-        VideoPlayer:
+            ColoredLabel:
+                id: jerseynumber_label
+                font_size: root.height/40
+                text: 'No Jersey Number'
+                bold: True
+        BoxLayout:
             size_hint_y: .65
-            id: video_player
-            source: ''
-            state: 'stop'
-            options: {'eos': 'loop'}
-            allow_stretch: True
+            orientation: 'horizontal'
+
+            VideoPlayer:
+                id: video_player
+                size_hint_x: .7
+                source: ''
+                state: 'stop'
+                options: {'eos': 'loop'}
+                allow_stretch: True
+            BoxLayout:
+                id: plot_container
+                size_hint_x: .3
+                orientation: 'vertical'
+                canvas.before:
+                    Color:
+                        rgba: (0, 0, 0, 1)  # Black background
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
         Label:
             id: info_label
             size_hint_y: .05
 
         BoxLayout:
             size_hint_y: 0.1
-            Button:
-                font_size: root.height/40
-                size_hint_x: .5
-                text: 'Previous Action'
-                on_release: root.previous_video(self)
-                disabled: True
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_x: .25
+                Button:
+                    size_hint_y: .5
+                    font_size: root.height/40
+                    text: 'Previous Action'
+                    on_release: root.previous_video(self)
+                    disabled: True
+                Button:
+                    size_hint_y: .5
+                    font_size: root.height/40
+                    text: 'Back to User Data'
+                    on_release: root.confirm_back_to_questionnaire()
             ToggleButton:
                 id: btn_notrec
                 font_size: root.height/40
-                size_hint_x: 1.5
-                text: 'Action not recognized'
-                on_state: root.action_not_recognized = (self.state == 'down')
+                size_hint_x: .3
+                text: 'Action not Recognized'
+                on_state: root.action_not_recognized = (self.state == 'down')        
+            Button:
+                id: submit_button
+                font_size: root.height/40
+                size_hint_x: .4
+                text: 'Submit Rating'
+                disabled: (root.current_rating is None) and (not root.action_not_recognized)
+                opacity: 1 if not self.disabled else .5
+                on_release:
+                    root.submit_rating()
 
         ########### Creativity Rating ###########
         BoxLayout:
@@ -473,19 +509,3 @@
                 Label:
                     text: 'very appealing'
 
-        BoxLayout:
-            size_hint_y: 0.15
-            Button:
-                font_size: root.height/40
-                size_hint_x: .5
-                text: 'Back to User data'
-                on_release: root.confirm_back_to_questionnaire()
-            Button:
-                id: submit_button
-                font_size: root.height/40
-                size_hint_x: 1.5
-                text: 'Submit Rating'
-                disabled: (root.current_rating is None) and (not root.action_not_recognized)
-                opacity: 1 if not self.disabled else .5
-                on_release:
-                    root.submit_rating()

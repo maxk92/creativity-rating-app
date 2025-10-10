@@ -366,8 +366,7 @@ class VideoPlayerScreen(Screen):
             if not row.empty:
                 self.ids.team_label.text = str(row.team.values[0])
                 self.ids.player_label.text = str(row.player.values[0])
-                #self.ids.jerseynumber_label.text = f"Number: {str(row.jersey_number.values[0])}"
-                self.ids.jerseynumber_label.text = "Number:"
+                self.ids.jerseynumber_label.text = f"Number: {str(row.jersey_number.values[0])}"
                 self.ids.type_label.text = str(row.type.values[0])
 
                 # Display body part (prioritize shot_body_part, fallback to pass_body_part)

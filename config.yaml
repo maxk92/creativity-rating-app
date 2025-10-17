@@ -9,3 +9,6 @@ paths:
   
   # dummy videos on localhost max
   video_path: "/home/max/drive/dshs/Creativity/code/creativity-rating-app/videos_all/"
+
+settings:
+  min_ratings_per_video: 2

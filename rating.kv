@@ -256,20 +256,11 @@
 
         BoxLayout:
             size_hint_y: 0.1
-            BoxLayout:
-                orientation: 'vertical'
+            Button:
                 size_hint_x: .25
-                Button:
-                    size_hint_y: .5
-                    font_size: root.height/40
-                    text: 'Previous Action'
-                    on_release: root.previous_video(self)
-                    disabled: True
-                Button:
-                    size_hint_y: .5
-                    font_size: root.height/40
-                    text: 'Back to User Data'
-                    on_release: root.confirm_back_to_questionnaire()
+                font_size: root.height/40
+                text: 'Back to User Data'
+                on_release: root.confirm_back_to_questionnaire()
             ToggleButton:
                 id: btn_notrec
                 font_size: root.height/40

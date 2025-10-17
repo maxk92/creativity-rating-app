@@ -226,23 +226,38 @@ class VideoPlayerScreen(Screen):
 
             db_path = config_data['paths']['db_path']
             self.path_videos = config_data['paths']['video_path']
+            min_ratings_per_video = config_data['settings']['min_ratings_per_video']
+        except FileNotFoundError:
+            print("[ERROR] config.yaml file not found.")
         except KeyError as e:
             print(f"[ERROR] Missing key in config.yaml: {e}.")
 
         # Get list of all MP4 files in the video directory
         try:
-            self.videos = [f for f in os.listdir(self.path_videos) if f.lower().endswith('.mp4')]
+            all_videos = [f for f in os.listdir(self.path_videos) if f.lower().endswith('.mp4')]
         except FileNotFoundError:
             print(f"[ERROR] Video directory not found: {self.path_videos}")
-            self.videos = []
+            all_videos = []
 
+        
+        user_id = App.get_running_app().user.user_id or 'unknown'
+        
+        # Get list of videos already rated by this user
+        videos_rated_by_user = [f.replace('.json', '').replace(user_id+'_', '') for f in os.listdir('user_ratings') if user_id+'_' in f]
+        # Filter out already rated videos
+        unrated_videos = [v for v in all_videos if v.replace('.mp4', '') not in videos_rated_by_user]
+        
+        # count number of ratings per id
+        rated_ids = [f.split('_')[1].replace('.json', '') for f in os.listdir('user_ratings')]
+        rating_counts = pd.Series(rated_ids).value_counts()
+        
+        # get ids with more than N ratings
+        videos_fullyrated = rating_counts[rating_counts >= min_ratings_per_video].index.tolist()
+
+        self.videos = [v for v in unrated_videos if v.replace('.mp4', '') not in videos_fullyrated]
+                    
         # Shuffle videos for randomization (currently disabled for pilot phase)
-        random.seed(42)
-        ########################################################
-        #### TODO: Re-enable after pilot phase is complete ####
-        ########################################################
-
-        #random.shuffle(self.videos)
+        random.shuffle(self.videos)
 
         # Load metadata from DuckDB database
         try:
@@ -347,14 +362,6 @@ class VideoPlayerScreen(Screen):
             video_file = self.videos[self.index]
             action_id = os.path.splitext(os.path.basename(video_file))[0]
 
-            # Skip videos already rated by this user
-            user_id = App.get_running_app().user.user_id or 'unknown'
-            rated_path = os.path.join('user_ratings', f'{user_id}_{action_id}.json')
-            if os.path.exists(rated_path):
-                print(f"[INFO] Already rated by {user_id}: {action_id} — skipping.")
-                self.index += 1
-                continue
-
             # Load video and start playback
             self.ids.video_player.source = os.path.join(self.path_videos, video_file)
             self.ids.video_player.state = 'play'
@@ -369,9 +376,7 @@ class VideoPlayerScreen(Screen):
                 self.ids.jerseynumber_label.text = f"Number: {str(row.jersey_number.values[0])}"
                 self.ids.type_label.text = str(row.type.values[0])
 
-                # Display body part (prioritize shot_body_part, fallback to pass_body_part)
                 self.ids.bodypart_label.text = str(row.bodypart.values[0]) 
-
                 # Store trajectory coordinates as instance variables
                 self.start_x = row.start_x.values[0]
                 self.start_y = row.start_y.values[0]

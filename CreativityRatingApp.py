@@ -499,6 +499,17 @@ class RatingApp(App):
 
         return screen_manager
 
+    def on_stop(self):
+        """
+        Called when the application is terminated.
+        Triggers the write_ratings2csv script to export data and create log file.
+        """
+        try:
+            import write_ratings2csv
+            print("[INFO] Exporting ratings and generating log file...")
+        except Exception as e:
+            print(f"[ERROR] Failed to run write_ratings2csv: {e}")
+
 
 if __name__ == '__main__':
     RatingApp().run()

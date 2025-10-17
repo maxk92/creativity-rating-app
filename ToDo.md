@@ -2,6 +2,8 @@
 
 ### Prio 1
 
+-   immer aktuelle Übersicht über geratete Videos (pro User und insgesamt) in App directory führen
+
 -   App auf fullscreen starten
 
 -   Darstellung der Skalen im Fullscreen fixen
@@ -10,11 +12,7 @@
 
 -   Schriftgröße für Labels auf Skalen erhöhen
 
--   Instructions Page in App anpassen
-
--   previous action button fixen (aktuelle Logik erlaubt kein Zurückgehen, da bei jedem Video geprüft wird, ob es schon gerated wurde; stattdessen: bei Erstellung der Video Liste prüfen, welche Videos schon gerated wurden; alle anderen in Liste schreiben und keine Prüfung vor jedem Video)
-
--   Trikotnummer in App anzeigen (dazu muss zunächst Trikotnummer aus statsbomb Lineups geladen und in die DB geschrieben werden)
+-   Instructions Page in App anpassen (Instruktionen für User, ggf. Kreativitätsdefinition)
 
 ### Prio 3
 
@@ -37,6 +35,10 @@
 -   mehr anzuzeigende Features der Aktion
 
 ### Done
+
+~~-   Trikotnummer in App anzeigen (dazu muss zunächst Trikotnummer aus statsbomb Lineups geladen und in die DB geschrieben werden)~~
+
+~~-   previous action button fixen (aktuelle Logik erlaubt kein Zurückgehen, da bei jedem Video geprüft wird, ob es schon gerated wurde; stattdessen: bei Erstellung der Video Liste prüfen, welche Videos schon gerated wurden; alle anderen in Liste schreiben und keine Prüfung vor jedem Video)~~
 
 ~~-   ReadME anpassen für andere User (Instructions for App use)~~
 

@@ -2,9 +2,6 @@
 
 ### Prio 1
 
--   immer aktuelle Übersicht über geratete Videos (pro User und insgesamt) in App directory führen
-
--   App auf fullscreen starten
 
 -   Darstellung der Skalen im Fullscreen fixen
 
@@ -35,6 +32,10 @@
 -   mehr anzuzeigende Features der Aktion
 
 ### Done
+
+~~-   immer aktuelle Übersicht über geratete Videos (pro User und insgesamt) in App directory führen~~
+
+~~-   App auf fullscreen starten~~
 
 ~~-   Trikotnummer in App anzeigen (dazu muss zunächst Trikotnummer aus statsbomb Lineups geladen und in die DB geschrieben werden)~~
 

@@ -20,155 +20,92 @@
             Button:
                 font_size: root.height/40
                 text: 'Next'
-                on_release: app.root.current = 'questionnaire'
+                on_release: app.root.current = 'login'
 
 
-<QuestionnaireScreen>:
+<LoginScreen>:
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            text: 'Please enter your information below.'
-            font_size: root.height/40
-            size_hint_y: 0.10
-            height: '48dp'
-        BoxLayout:
-            size_hint_y: 0.10
-            height: '48dp'
-
-            Label:
-                font_size: root.height/40
-                text: 'Please select your gender'
-            ToggleButton:
-                font_size: root.height/40
-                text: 'M'
-                group: "user_gender"
-                on_state: root.gender_clicked(self, self.state, "M")
-            ToggleButton:
-                font_size: root.height/40
-                text: 'F'
-                group: "user_gender"
-                on_state: root.gender_clicked(self, self.state, "F")
-            ToggleButton:
-                font_size: root.height/40
-                text: 'D'
-                group: "user_gender"
-                on_state: root.gender_clicked(self, self.state, "D")
-
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Enter your age'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.age_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Experience as a player (years)'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.player_exp_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Experience as a coach (years)'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.coach_exp_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: 'Experience regularly watching soccer (years)'
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.watch_exp_input(self, self.text)
-
-        BoxLayout:
-            size_hint_y: 0.10
-            height: '48dp'
-            Label:
-                font_size: root.height/40
-                text: 'Coaching License:'
-            ToggleButton:
-                font_size: root.height/40
-                text: 'None'
-                group: "user_license"
-                on_state: root.license_clicked(self, self.state, "None")
-            ToggleButton:
-                font_size: root.height/40
-                text: 'B'
-                group: "user_license"
-                on_state: root.license_clicked(self, self.state, "B")
-            ToggleButton:
-                font_size: root.height/40
-                text: 'A'
-                group: "user_license"
-                on_state: root.license_clicked(self, self.state, "A")
-            ToggleButton:
-                font_size: root.height/40
-                text: 'Pro'
-                group: "user_license"
-                on_state: root.license_clicked(self, self.state, "Pro")
-
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: "First two letters of mother's given name"
-            size_hint_y: 0.10
-            height: '48dp'
-            max_length: 2
-            on_text: root.mother_initials_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: "First two letters of father's given name"
-            size_hint_y: 0.10
-            height: '48dp'
-            max_length: 2
-            on_text: root.father_initials_input(self, self.text)
-
-        TextInput:
-            font_size: root.height/30
-            hint_text: "Number of siblings"
-            input_filter: 'int'
-            size_hint_y: 0.10
-            height: '48dp'
-            on_text: root.siblings_input(self, self.text)
-
-        BoxLayout:
-            size_hint_y: 0.10
-            height: '48dp'
-            spacing: 5
-            Label:
-                font_size: root.height/40
-                text: 'Birthday:'
-                size_hint_x: 0.3
-            TextInput:
-                font_size: root.height/30
-                hint_text: 'Day'
-                input_filter: 'int'
-                on_text: root.birth_day_input(self, self.text)
-            TextInput:
-                font_size: root.height/30
-                hint_text: 'Month'
-                input_filter: 'int'
-                on_text: root.birth_month_input(self, self.text)
-            TextInput:
-                font_size: root.height/30
-                hint_text: 'Year'
-                input_filter: 'int'
-                on_text: root.birth_year_input(self, self.text)
+        padding: 20
+        spacing: 20
 
         Label:
+            size_hint_y: 0.15
+            text: ''
+
+        Label:
+            text: 'Have you already participated in this study and therefore used the app before?'
+            font_size: root.height/35
+            size_hint_y: 0.15
+            halign: 'center'
+            valign: 'middle'
+            text_size: self.size
+
+        BoxLayout:
+            size_hint_y: 0.1
+            spacing: 20
+            padding: [100, 0, 100, 0]
+
+            ToggleButton:
+                font_size: root.height/40
+                text: 'Yes'
+                group: "participation"
+                on_state: root.participation_clicked(self, self.state, True)
+
+            ToggleButton:
+                font_size: root.height/40
+                text: 'No'
+                group: "participation"
+                on_state: root.participation_clicked(self, self.state, False)
+
+        # Message for new users (No selected)
+        BoxLayout:
+            orientation: 'vertical'
             size_hint_y: 0.25
+            opacity: 1 if root.has_participated == False else 0
+            disabled: root.has_participated != False
+            padding: [50, 20, 50, 20]
+
+            Label:
+                text: 'You will now be forwarded to the questionnaire, where you are asked some questions and your user id is being generated. Proceed?'
+                font_size: root.height/45
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+        # User ID input for returning users (Yes selected)
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.25
+            opacity: 1 if root.has_participated == True else 0
+            disabled: root.has_participated != True
+            padding: [50, 20, 50, 20]
+            spacing: 10
+
+            Label:
+                text: 'Please enter your user ID:'
+                font_size: root.height/40
+                size_hint_y: 0.3
+
+            TextInput:
+                font_size: root.height/35
+                hint_text: 'Enter your user ID'
+                size_hint_y: 0.4
+                on_text: root.user_id_input_changed(self, self.text)
+
+            Label:
+                text: ('User ID found' if root.user_id_exists else ('User ID not found' if root.user_id_input else ''))
+                font_size: root.height/45
+                size_hint_y: 0.3
+                color: (0, 0.8, 0, 1) if root.user_id_exists else (1, 0, 0, 1)
+
+        Label:
+            size_hint_y: 0.2
             text: ''
 
         BoxLayout:
             size_hint_y: 0.15
+            spacing: 10
             Button:
                 font_size: root.height/40
                 text: 'Back'
@@ -176,9 +113,217 @@
             Button:
                 font_size: root.height/40
                 text: 'Next'
-                on_release:
-                    app.root.current = 'videoplayer'
-                    root.save_user_data()
+                on_release: root.proceed_next()
+
+
+<QuestionnaireScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+
+        # Input Form Panel (shown when user_id not yet confirmed)
+        BoxLayout:
+            orientation: 'vertical'
+            opacity: 1 if not root.user_id_confirmed else 0
+            disabled: root.user_id_confirmed
+            size_hint_y: 1 if not root.user_id_confirmed else None
+            height: 0 if root.user_id_confirmed else self.parent.height
+
+            Label:
+                text: 'Please enter your information below.'
+                font_size: root.height/40
+                size_hint_y: 0.10
+                height: '48dp'
+            BoxLayout:
+                size_hint_y: 0.10
+                height: '48dp'
+
+                Label:
+                    font_size: root.height/40
+                    text: 'Please select your gender'
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'M'
+                    group: "user_gender"
+                    on_state: root.gender_clicked(self, self.state, "M")
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'F'
+                    group: "user_gender"
+                    on_state: root.gender_clicked(self, self.state, "F")
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'D'
+                    group: "user_gender"
+                    on_state: root.gender_clicked(self, self.state, "D")
+
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Enter your age'
+                input_filter: 'int'
+                size_hint_y: 0.10
+                height: '48dp'
+                on_text: root.age_input(self, self.text)
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Experience as a player (years)'
+                input_filter: 'int'
+                size_hint_y: 0.10
+                height: '48dp'
+                on_text: root.player_exp_input(self, self.text)
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Experience as a coach (years)'
+                input_filter: 'int'
+                size_hint_y: 0.10
+                height: '48dp'
+                on_text: root.coach_exp_input(self, self.text)
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: 'Experience regularly watching soccer (years)'
+                input_filter: 'int'
+                size_hint_y: 0.10
+                height: '48dp'
+                on_text: root.watch_exp_input(self, self.text)
+
+            BoxLayout:
+                size_hint_y: 0.10
+                height: '48dp'
+                Label:
+                    font_size: root.height/40
+                    text: 'Coaching License:'
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'None'
+                    group: "user_license"
+                    on_state: root.license_clicked(self, self.state, "None")
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'B'
+                    group: "user_license"
+                    on_state: root.license_clicked(self, self.state, "B")
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'A'
+                    group: "user_license"
+                    on_state: root.license_clicked(self, self.state, "A")
+                ToggleButton:
+                    font_size: root.height/40
+                    text: 'Pro'
+                    group: "user_license"
+                    on_state: root.license_clicked(self, self.state, "Pro")
+
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: "First two letters of mother's given name"
+                size_hint_y: 0.10
+                height: '48dp'
+                max_length: 2
+                on_text: root.mother_initials_input(self, self.text)
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: "First two letters of father's given name"
+                size_hint_y: 0.10
+                height: '48dp'
+                max_length: 2
+                on_text: root.father_initials_input(self, self.text)
+
+            TextInput:
+                font_size: root.height/30
+                hint_text: "Number of siblings"
+                input_filter: 'int'
+                size_hint_y: 0.10
+                height: '48dp'
+                on_text: root.siblings_input(self, self.text)
+
+            BoxLayout:
+                size_hint_y: 0.10
+                height: '48dp'
+                spacing: 5
+                Label:
+                    font_size: root.height/40
+                    text: 'Birthday:'
+                    size_hint_x: 0.3
+                TextInput:
+                    font_size: root.height/30
+                    hint_text: 'Day'
+                    input_filter: 'int'
+                    on_text: root.birth_day_input(self, self.text)
+                TextInput:
+                    font_size: root.height/30
+                    hint_text: 'Month'
+                    input_filter: 'int'
+                    on_text: root.birth_month_input(self, self.text)
+                TextInput:
+                    font_size: root.height/30
+                    hint_text: 'Year'
+                    input_filter: 'int'
+                    on_text: root.birth_year_input(self, self.text)
+
+            Label:
+                size_hint_y: 0.25
+                text: ''
+
+            BoxLayout:
+                size_hint_y: 0.15
+                Button:
+                    font_size: root.height/40
+                    text: 'Back'
+                    on_release: app.root.current = 'login'
+                Button:
+                    font_size: root.height/40
+                    text: 'Next'
+                    on_release: root.show_user_id_confirmation()
+
+        # User ID Display Panel (shown after user_id is confirmed)
+        BoxLayout:
+            orientation: 'vertical'
+            opacity: 1 if root.user_id_confirmed else 0
+            disabled: not root.user_id_confirmed
+            size_hint_y: 1 if root.user_id_confirmed else None
+            height: 0 if not root.user_id_confirmed else self.parent.height
+            padding: 50
+            spacing: 30
+
+            Label:
+                size_hint_y: 0.3
+                text: ''
+
+            Label:
+                text: 'This is your user id. Please memorize it. You will have to enter it when again opening the app.'
+                font_size: root.height/50
+                size_hint_y: 0.2
+                halign: 'center'
+                valign: 'middle'
+                text_size: self.size
+
+            Label:
+                text: root.display_user_id
+                font_size: root.height/20
+                size_hint_y: 0.3
+                bold: True
+                halign: 'center'
+                valign: 'middle'
+
+            BoxLayout:
+                size_hint_y: 0.2
+                spacing: 10
+                padding: [50, 0, 50, 0]
+
+                Button:
+                    text: 'Back to User Data'
+                    font_size: root.height/40
+                    on_release: root.back_to_form()
+
+                Button:
+                    text: 'Understood. Proceed'
+                    font_size: root.height/40
+                    on_release: root.proceed_to_video()
 
 <ColoredLabel@Label>:
     canvas.before:

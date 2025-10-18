@@ -16,7 +16,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, CardTransition, SwapTransition, WipeTransition, FallOutTransition
 from kivy.lang import Builder
 from kivy.uix.popup import Popup
-from kivy.properties import NumericProperty, BooleanProperty
+from kivy.properties import NumericProperty, BooleanProperty, StringProperty
+from kivy.core.window import Window
 import random
 from pathlib import Path
 from datetime import datetime
@@ -27,6 +28,9 @@ import matplotlib.pyplot as plt
 import mplsoccer
 
 kivy.require("1.9.1")
+
+# Set window to fullscreen
+Window.fullscreen = 'auto'
 
 class User:
     """
@@ -98,11 +102,82 @@ class WelcomeScreen(Screen):
     """Initial welcome screen of the app."""
     pass
 
+class LoginScreen(Screen):
+    """
+    Screen for checking if user has participated before.
+    If yes, prompts for user_id and validates it exists in user_data.
+    If no, shows message before proceeding to questionnaire.
+    """
+    has_participated = BooleanProperty(None, allownone=True)  # None=not selected, True=Yes, False=No
+    user_id_input = StringProperty('')  # User's typed user_id
+    user_id_exists = BooleanProperty(False)  # Whether the user_id exists in user_data
+
+    def participation_clicked(self, instance, value, participated):
+        """Handle participation button click."""
+        if value == "down":
+            self.has_participated = participated
+
+    def user_id_input_changed(self, instance, value):
+        """Handle user_id input and check if it exists in user_data."""
+        self.user_id_input = value.lower()  # Convert to lowercase
+
+        # Check if user_data file exists for this user_id
+        if self.user_id_input:
+            try:
+                user_data_files = os.listdir('user_data')
+                # Check if any file starts with this user_id followed by underscore
+                self.user_id_exists = any(
+                    f.startswith(f"{self.user_id_input}_")
+                    for f in user_data_files
+                )
+            except FileNotFoundError:
+                self.user_id_exists = False
+        else:
+            self.user_id_exists = False
+
+    def proceed_next(self):
+        """Handle Next button click."""
+        if self.has_participated is None:
+            # User hasn't selected Yes/No yet
+            Popup(
+                title="Selection Required",
+                content=Label(text="Please indicate whether you have participated before."),
+                size_hint=(0.6, 0.3)
+            ).open()
+            return
+
+        if self.has_participated:
+            # User has participated - check if user_id is valid
+            if not self.user_id_input:
+                Popup(
+                    title="User ID Required",
+                    content=Label(text="Please enter your user ID."),
+                    size_hint=(0.6, 0.3)
+                ).open()
+                return
+
+            if not self.user_id_exists:
+                Popup(
+                    title="User ID Not Found",
+                    content=Label(text="This user ID was not found in our records.\nPlease check your ID or select 'No' if this is your first time."),
+                    size_hint=(0.6, 0.4)
+                ).open()
+                return
+
+            # Valid returning user - set user_id and go to video player
+            App.get_running_app().user.user_id = self.user_id_input
+            App.get_running_app().root.current = 'videoplayer'
+        else:
+            # New user - go to questionnaire
+            App.get_running_app().root.current = 'questionnaire'
+
 class QuestionnaireScreen(Screen):
     """
     Screen for collecting user demographic and experience information.
     Captures gender, age, soccer experience (as player, coach, watcher), and license info.
     """
+    user_id_confirmed = BooleanProperty(False)  # Track whether user_id has been displayed
+    display_user_id = StringProperty('')  # Store user_id for display
 
     def gender_clicked(self, instance, value, gender):
         """Handle gender button click (when button is pressed down)."""
@@ -173,6 +248,19 @@ class QuestionnaireScreen(Screen):
         if value == "down":
             App.get_running_app().user.set_user_license(license)
 
+    def show_user_id_confirmation(self):
+        """
+        Display the user_id confirmation panel without saving data yet.
+        Data will only be saved when user clicks 'Understood. Proceed'.
+        """
+        user = App.get_running_app().user
+        self.display_user_id = user.user_id
+        self.user_id_confirmed = True
+
+    def back_to_form(self):
+        """Go back to the questionnaire form to allow editing."""
+        self.user_id_confirmed = False
+
     def save_user_data(self):
         """
         Save user demographic data to a timestamped JSON file.
@@ -183,7 +271,7 @@ class QuestionnaireScreen(Screen):
             os.makedirs('user_data', exist_ok=True)
 
             ts = datetime.now().astimezone()
-            filename = f"{user.user_id}_{ts.strftime('%Y%m%d_%H%M%S')}.json"
+            filename = f"{user.user_id}.json"
             path = os.path.join('user_data', filename)
 
             with open(path, 'w') as f:
@@ -200,6 +288,11 @@ class QuestionnaireScreen(Screen):
             print(f"[INFO] User data saved: {filename}")
         except Exception as e:
             print(f"[ERROR] Failed to save user data: {e}")
+
+    def proceed_to_video(self):
+        """Save data and navigate to video player screen after user confirms they memorized their ID."""
+        self.save_user_data()
+        App.get_running_app().root.current = 'videoplayer'
 
 
 class VideoPlayerScreen(Screen):
@@ -494,6 +587,7 @@ class RatingApp(App):
         screen_manager = ScreenManager(transition=FadeTransition())
 
         screen_manager.add_widget(WelcomeScreen(name = "welcome"))
+        screen_manager.add_widget(LoginScreen(name="login"))
         screen_manager.add_widget(QuestionnaireScreen(name="questionnaire"))
         screen_manager.add_widget(VideoPlayerScreen(name="videoplayer"))
 

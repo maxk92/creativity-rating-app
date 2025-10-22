@@ -13,13 +13,11 @@ from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, CardTransition, SwapTransition, WipeTransition, FallOutTransition
-from kivy.lang import Builder
+from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.uix.popup import Popup
 from kivy.properties import NumericProperty, BooleanProperty, StringProperty
 from kivy.core.window import Window
 import random
-from pathlib import Path
 from datetime import datetime
 import duckdb
 import yaml
@@ -341,7 +339,7 @@ class VideoPlayerScreen(Screen):
         unrated_videos = [v for v in all_videos if v.replace('.mp4', '') not in videos_rated_by_user]
         
         # count number of ratings per id
-        rated_ids = [f.split('_')[1].replace('.json', '') for f in os.listdir('user_ratings')]
+        rated_ids = [f.split('_')[1].replace('.json', '') for f in os.listdir('user_ratings') if f.endswith('.json')]
         rating_counts = pd.Series(rated_ids).value_counts()
         
         # get ids with more than N ratings

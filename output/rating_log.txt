@@ -1,20 +1,20 @@
 ============================================================
 CREATIVITY RATING APP - DATA EXPORT LOG
 ============================================================
-Generated at: 2025-10-18 18:01:00
+Generated at: 2025-10-21 20:07:11
 
-Number of unique actions rated: 1058
+Number of unique actions rated: 1382
 
-Number of raters involved: 7
+Number of raters involved: 6
 
 Rating frequency distribution:
 ----------------------------------------
 Times Rated     Number of Actions   
 ----------------------------------------
-1               600                 
-2               201                 
+1               813                 
+2               311                 
 3               123                 
-4               88                  
+4               89                  
 5               46                  
 
 ============================================================

@@ -123,10 +123,11 @@ class LoginScreen(Screen):
         if self.user_id_input:
             try:
                 user_data_files = os.listdir('user_data')
+                user_ratings_files = os.listdir('user_ratings')
                 # Check if any file starts with this user_id followed by underscore
                 self.user_id_exists = any(
                     f.startswith(f"{self.user_id_input}_")
-                    for f in user_data_files
+                    for f in user_ratings_files
                 )
             except FileNotFoundError:
                 self.user_id_exists = False

@@ -7,4 +7,5 @@ kivyCreativityEnv/
 user_data/
 user_ratings/
 output/
+output/*
 __pycache__/

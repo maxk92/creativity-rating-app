@@ -64,7 +64,8 @@ df_mean_ratings = df_ratings.groupby('id').agg(
     mean_aesthetic_appeal=('aesthetic_appeal', 'mean'),
     std_aesthetic_appeal=('aesthetic_appeal', 'std'),
     mean_action_not_recognized=('action_not_recognized', 'mean')
-)
+).round(3)
+
 df_mean_ratings.to_csv('output/mean_ratings.csv')
 
 # Load user data

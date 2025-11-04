@@ -54,6 +54,19 @@ df_ratings.to_csv('output/ratings.csv')
 print(f"Loaded {len(df_ratings)} ratings from {df_ratings['filename'].nunique()} files")
 print(f"Number of rated actions: {df_ratings['id'].nunique()}")
 
+# Store mean ratings per action
+df_mean_ratings = df_ratings.groupby('id').agg(
+    num_ratings=('action_rating', 'count'),
+    mean_rating=('action_rating', 'mean'),
+    std_rating=('action_rating', 'std'),
+    mean_technical_correctness=('technical_correctness', 'mean'),
+    std_technical_correctness=('technical_correctness', 'std'),
+    mean_aesthetic_appeal=('aesthetic_appeal', 'mean'),
+    std_aesthetic_appeal=('aesthetic_appeal', 'std'),
+    mean_action_not_recognized=('action_not_recognized', 'mean')
+)
+df_mean_ratings.to_csv('output/mean_ratings.csv')
+
 # Load user data
 df_users = load_json_files_with_datetime(userdata_path, 'users')
 df_users.to_csv('output/users.csv')

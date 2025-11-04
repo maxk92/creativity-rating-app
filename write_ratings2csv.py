@@ -1,4 +1,5 @@
 import json
+import shutil
 import pandas as pd
 import os
 from datetime import datetime
@@ -106,3 +107,15 @@ with open(log_path, 'w') as log_file:
     log_file.write("\n" + "=" * 60 + "\n")
 
 print(f"\n[INFO] Log file created: {log_path}")
+
+# backup files to higher level folder
+os.makedirs('backup/user_data/', exist_ok=True)
+os.makedirs('backup/user_ratings/', exist_ok=True)
+# copy JSON files instead of moving them
+for filename in os.listdir(userdata_path):
+    if filename.endswith('.json'):
+        shutil.copy(os.path.join(userdata_path, filename), os.path.join('backup/user_data/', filename))
+for filename in os.listdir(ratings_path):
+    if filename.endswith('.json'):
+        shutil.copy(os.path.join(ratings_path, filename), os.path.join('backup/user_ratings/', filename))
+print("\n[INFO] Backup of JSON files completed.")

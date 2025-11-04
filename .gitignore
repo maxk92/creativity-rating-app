@@ -9,3 +9,5 @@ user_ratings/
 output/
 output/*
 __pycache__/
+
+playground.ipynb

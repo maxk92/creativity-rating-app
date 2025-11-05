@@ -12,11 +12,14 @@ import json
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.uix.popup import Popup
 from kivy.properties import NumericProperty, BooleanProperty, StringProperty
 from kivy.core.window import Window
+from kivy.graphics import Color, Rectangle, Line
 import random
 from datetime import datetime
 import duckdb
@@ -29,6 +32,124 @@ kivy.require("1.9.1")
 
 # Set window to fullscreen
 Window.fullscreen = 'auto'
+
+class FocusableToggleButton(ToggleButton):
+    """
+    ToggleButton with keyboard focus support and visual feedback.
+    Shows a border when focused to indicate it's the active element.
+    """
+    focus = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.focus_rect = None
+        self.focus_color = None
+        self.bind(focus=self.on_focus)
+
+    def on_focus(self, instance, value):
+        """Add visual feedback when button gains/loses focus."""
+        if value:  # Gained focus
+            with self.canvas.after:
+                self.focus_color = Color(0, 0.5, 1, 1)  # Blue focus border
+                self.focus_rect = Line(rectangle=(self.x, self.y, self.width, self.height), width=3)
+            self.bind(pos=self._update_focus_rect, size=self._update_focus_rect)
+        else:  # Lost focus
+            if self.focus_rect:
+                self.canvas.after.remove(self.focus_color)
+                self.canvas.after.remove(self.focus_rect)
+                self.unbind(pos=self._update_focus_rect, size=self._update_focus_rect)
+                self.focus_rect = None
+                self.focus_color = None
+
+    def _update_focus_rect(self, *args):
+        """Update focus rectangle position and size when widget moves/resizes."""
+        if self.focus_rect:
+            self.focus_rect.rectangle = (self.x, self.y, self.width, self.height)
+
+
+class FocusableButton(Button):
+    """
+    Button with keyboard focus support and visual feedback.
+    Shows a border when focused to indicate it's the active element.
+    """
+    focus = BooleanProperty(False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.focus_rect = None
+        self.focus_color = None
+        self.bind(focus=self.on_focus)
+
+    def on_focus(self, instance, value):
+        """Add visual feedback when button gains/loses focus."""
+        if value:  # Gained focus
+            with self.canvas.after:
+                self.focus_color = Color(0, 0.5, 1, 1)  # Blue focus border
+                self.focus_rect = Line(rectangle=(self.x, self.y, self.width, self.height), width=3)
+            self.bind(pos=self._update_focus_rect, size=self._update_focus_rect)
+        else:  # Lost focus
+            if self.focus_rect:
+                self.canvas.after.remove(self.focus_color)
+                self.canvas.after.remove(self.focus_rect)
+                self.unbind(pos=self._update_focus_rect, size=self._update_focus_rect)
+                self.focus_rect = None
+                self.focus_color = None
+
+    def _update_focus_rect(self, *args):
+        """Update focus rectangle position and size when widget moves/resizes."""
+        if self.focus_rect:
+            self.focus_rect.rectangle = (self.x, self.y, self.width, self.height)
+
+
+class FocusableTextInput(TextInput):
+    """
+    TextInput with keyboard focus support that doesn't consume Tab key.
+    Allows Tab to be used for navigation instead of text insertion.
+    """
+    # Note: TextInput already has a 'focus' property, so we don't need to add it
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.focus_rect = None
+        self.focus_color = None
+        self.bind(focus=self.on_focus_change)
+
+    def on_focus_change(self, instance, value):
+        """Add visual feedback when input gains/loses focus."""
+        if value:  # Gained focus
+            with self.canvas.after:
+                self.focus_color = Color(0, 0.5, 1, 1)  # Blue focus border
+                self.focus_rect = Line(rectangle=(self.x, self.y, self.width, self.height), width=3)
+            self.bind(pos=self._update_focus_rect, size=self._update_focus_rect)
+        else:  # Lost focus
+            if self.focus_rect:
+                self.canvas.after.remove(self.focus_color)
+                self.canvas.after.remove(self.focus_rect)
+                self.unbind(pos=self._update_focus_rect, size=self._update_focus_rect)
+                self.focus_rect = None
+                self.focus_color = None
+
+    def _update_focus_rect(self, *args):
+        """Update focus rectangle position and size when widget moves/resizes."""
+        if self.focus_rect:
+            self.focus_rect.rectangle = (self.x, self.y, self.width, self.height)
+
+    def keyboard_on_key_down(self, window, keycode, text, modifiers):
+        """Override to prevent Tab from being consumed by TextInput."""
+        key = keycode[1]
+
+        # Don't consume Tab or Shift+Tab - let parent handle it for navigation
+        if key == 'tab':
+            return False
+
+        # Don't consume Enter/Space when we want them for navigation
+        # But allow normal Enter for text input in multiline mode
+        if key in ('enter', 'numpadenter') and not self.multiline:
+            return False
+
+        # For all other keys, use default TextInput behavior
+        return super().keyboard_on_key_down(window, keycode, text, modifiers)
+
 
 class User:
     """
@@ -97,18 +218,70 @@ class User:
 
 
 class WelcomeScreen(Screen):
-    """Initial welcome screen of the app."""
-    pass
+    """Initial welcome screen of the app with keyboard support."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._keyboard_bound = False
+
+    def on_enter(self, *args):
+        """Called when screen is displayed. Set up keyboard and focus Next button."""
+        if not self._keyboard_bound:
+            Window.bind(on_key_down=self._on_keyboard_down)
+            self._keyboard_bound = True
+
+        # Focus the Next button automatically
+        if 'btn_next' in self.ids:
+            self.ids.btn_next.focus = True
+            print("[KEYBOARD NAV] WelcomeScreen: Next button focused")
+
+    def on_leave(self, *args):
+        """Called when leaving screen. Clean up keyboard binding."""
+        if self._keyboard_bound:
+            Window.unbind(on_key_down=self._on_keyboard_down)
+            self._keyboard_bound = False
+
+        # Remove focus
+        if 'btn_next' in self.ids:
+            self.ids.btn_next.focus = False
+
+    def _on_keyboard_down(self, window, key, scancode, codepoint, modifiers):
+        """Handle keyboard input."""
+        # Only handle keyboard events when this screen is active
+        if App.get_running_app().root.current != 'welcome':
+            return False
+
+        # Get key name from scancode
+        from kivy.core.window import Keyboard
+        keycode = Keyboard.keycode_to_string(Window._system_keyboard, key)
+
+        print(f"[KEYBOARD NAV] WelcomeScreen key pressed: {keycode}")
+
+        if keycode in ('enter', 'numpadenter', 'spacebar', 'space'):
+            # Activate the Next button
+            if 'btn_next' in self.ids:
+                print("[KEYBOARD NAV] WelcomeScreen: Activating Next button")
+                self.ids.btn_next.dispatch('on_release')
+            return True
+
+        return False
 
 class LoginScreen(Screen):
     """
     Screen for checking if user has participated before.
     If yes, prompts for user_id and validates it exists in user_data.
     If no, shows message before proceeding to questionnaire.
+    Supports keyboard navigation via Tab key.
     """
     has_participated = BooleanProperty(None, allownone=True)  # None=not selected, True=Yes, False=No
     user_id_input = StringProperty('')  # User's typed user_id
     user_id_exists = BooleanProperty(False)  # Whether the user_id exists in user_data
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.focusable_widgets = []
+        self.current_focus_index = -1
+        self._keyboard_bound = False
 
     def participation_clicked(self, instance, value, participated):
         """Handle participation button click."""
@@ -133,6 +306,122 @@ class LoginScreen(Screen):
                 self.user_id_exists = False
         else:
             self.user_id_exists = False
+
+    def on_enter(self, *args):
+        """Called when screen is displayed. Set up keyboard and focus order."""
+        if not self._keyboard_bound:
+            Window.bind(on_key_down=self._on_keyboard_down)
+            self._keyboard_bound = True
+
+        self._build_focus_order()
+        print(f"[KEYBOARD NAV] LoginScreen: Initialized with {len(self.focusable_widgets)} focusable widgets")
+        # Set initial focus to first widget
+        if self.focusable_widgets:
+            self.set_focus(0)
+
+    def on_leave(self, *args):
+        """Called when leaving screen. Clean up keyboard binding."""
+        if self._keyboard_bound:
+            Window.unbind(on_key_down=self._on_keyboard_down)
+            self._keyboard_bound = False
+
+    def _build_focus_order(self):
+        """Build ordered list of focusable widgets based on screen layout."""
+        self.focusable_widgets = [
+            # Participation toggle buttons
+            self.ids.get('btn_participated_yes'),
+            self.ids.get('btn_participated_no'),
+            # User ID input (if shown)
+            self.ids.get('input_user_id'),
+            # Navigation buttons
+            self.ids.get('btn_back'),
+            self.ids.get('btn_next')
+        ]
+        # Filter out None values
+        self.focusable_widgets = [w for w in self.focusable_widgets if w is not None]
+
+    def _on_keyboard_down(self, window, key, scancode, codepoint, modifiers):
+        """Handle keyboard input."""
+        # Only handle keyboard events when this screen is active
+        if App.get_running_app().root.current != 'login':
+            return False
+
+        # Get key name from scancode
+        from kivy.core.window import Keyboard
+        keycode = Keyboard.keycode_to_string(Window._system_keyboard, key)
+
+        print(f"[KEYBOARD NAV] LoginScreen key pressed: {keycode}")
+
+        if keycode == 'tab':
+            # Tab moves focus forward, Shift+Tab moves backward
+            if 'shift' in modifiers:
+                self.focus_previous()
+            else:
+                self.focus_next()
+            return True
+
+        elif keycode in ('enter', 'numpadenter', 'spacebar', 'space'):
+            # Activate currently focused widget
+            self.activate_focused_widget()
+            return True
+
+        return False
+
+    def focus_next(self):
+        """Move focus to next widget."""
+        if not self.focusable_widgets:
+            return
+        self.current_focus_index = (self.current_focus_index + 1) % len(self.focusable_widgets)
+        self.set_focus(self.current_focus_index)
+
+    def focus_previous(self):
+        """Move focus to previous widget."""
+        if not self.focusable_widgets:
+            return
+        self.current_focus_index = (self.current_focus_index - 1) % len(self.focusable_widgets)
+        self.set_focus(self.current_focus_index)
+
+    def set_focus(self, index):
+        """Set focus to widget at given index."""
+        if not self.focusable_widgets or index < 0 or index >= len(self.focusable_widgets):
+            return
+
+        # Remove focus from all widgets
+        for widget in self.focusable_widgets:
+            if widget:
+                widget.focus = False
+
+        # Set focus to target widget
+        self.current_focus_index = index
+        widget = self.focusable_widgets[index]
+        if widget:
+            widget.focus = True
+            print(f"[KEYBOARD NAV] LoginScreen: Focus set to widget {index}")
+
+    def activate_focused_widget(self):
+        """Activate (click) the currently focused widget."""
+        if self.current_focus_index < 0 or self.current_focus_index >= len(self.focusable_widgets):
+            return
+
+        widget = self.focusable_widgets[self.current_focus_index]
+        if not widget:
+            return
+
+        print(f"[KEYBOARD NAV] LoginScreen: Activating widget")
+
+        # Handle different widget types
+        if isinstance(widget, ToggleButton):
+            # Handle group behavior manually
+            if widget.group:
+                for other_widget in self.focusable_widgets:
+                    if (isinstance(other_widget, ToggleButton) and
+                        other_widget.group == widget.group and
+                        other_widget != widget):
+                        other_widget.state = 'normal'
+            widget.state = 'down'
+
+        elif isinstance(widget, Button):
+            widget.dispatch('on_release')
 
     def proceed_next(self):
         """Handle Next button click."""
@@ -174,9 +463,173 @@ class QuestionnaireScreen(Screen):
     """
     Screen for collecting user demographic and experience information.
     Captures gender, age, soccer experience (as player, coach, watcher), and license info.
+    Supports keyboard navigation via Tab key.
     """
     user_id_confirmed = BooleanProperty(False)  # Track whether user_id has been displayed
     display_user_id = StringProperty('')  # Store user_id for display
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.focusable_widgets = []  # Will be populated in on_enter
+        self.current_focus_index = -1
+        self._keyboard_bound = False
+
+    def on_enter(self, *args):
+        """Called when screen is displayed. Set up keyboard and focus order."""
+        if not self._keyboard_bound:
+            Window.bind(on_key_down=self._on_keyboard_down)
+            self._keyboard_bound = True
+
+        self._build_focus_order()
+        print(f"[KEYBOARD NAV] QuestionnaireScreen: Initialized with {len(self.focusable_widgets)} focusable widgets")
+        # Set initial focus to first widget
+        if self.focusable_widgets:
+            self.set_focus(0)
+
+    def on_leave(self, *args):
+        """Called when leaving screen. Clean up keyboard binding."""
+        if self._keyboard_bound:
+            Window.unbind(on_key_down=self._on_keyboard_down)
+            self._keyboard_bound = False
+
+    def _build_focus_order(self):
+        """Build ordered list of focusable widgets based on form layout."""
+        if self.user_id_confirmed:
+            # Confirmation panel - only buttons
+            self.focusable_widgets = [
+                self.ids.get('btn_back_to_form'),
+                self.ids.get('btn_proceed_video')
+            ]
+        else:
+            # Main form panel - all inputs in order
+            self.focusable_widgets = [
+                # Gender buttons
+                self.ids.get('gender_m'),
+                self.ids.get('gender_f'),
+                self.ids.get('gender_d'),
+                # Age input
+                self.ids.get('input_age'),
+                # Experience inputs
+                self.ids.get('input_player_exp'),
+                self.ids.get('input_coach_exp'),
+                self.ids.get('input_watch_exp'),
+                # License buttons
+                self.ids.get('license_none'),
+                self.ids.get('license_b'),
+                self.ids.get('license_a'),
+                self.ids.get('license_pro'),
+                # User ID components
+                self.ids.get('input_mother_initials'),
+                self.ids.get('input_father_initials'),
+                self.ids.get('input_siblings'),
+                self.ids.get('input_birth_day'),
+                self.ids.get('input_birth_month'),
+                self.ids.get('input_birth_year'),
+                # Navigation buttons
+                self.ids.get('btn_back'),
+                self.ids.get('btn_next')
+            ]
+
+        # Filter out None values (widgets that don't exist)
+        self.focusable_widgets = [w for w in self.focusable_widgets if w is not None]
+
+    def _on_keyboard_down(self, window, key, scancode, codepoint, modifiers):
+        """Handle keyboard input. Called before focused widget receives the key."""
+        # Only handle keyboard events when this screen is active
+        if App.get_running_app().root.current != 'questionnaire':
+            return False
+
+        # Get key name from scancode
+        from kivy.core.window import Keyboard
+        keycode = Keyboard.keycode_to_string(Window._system_keyboard, key)
+
+        print(f"[KEYBOARD NAV] Key pressed: {keycode}, modifiers: {modifiers}")
+
+        if keycode == 'tab':
+            # Tab moves focus forward, Shift+Tab moves backward
+            if 'shift' in modifiers:
+                print("[KEYBOARD NAV] Moving focus backward")
+                self.focus_previous()
+            else:
+                print("[KEYBOARD NAV] Moving focus forward")
+                self.focus_next()
+            return True  # Consume event
+
+        elif keycode in ('enter', 'numpadenter', 'spacebar', 'space'):
+            # Activate currently focused widget
+            print(f"[KEYBOARD NAV] Activation key detected: {keycode}")
+            self.activate_focused_widget()
+            return True  # Consume event
+
+        return False  # Don't consume other keys
+
+    def focus_next(self):
+        """Move focus to next widget."""
+        if not self.focusable_widgets:
+            return
+
+        self.current_focus_index = (self.current_focus_index + 1) % len(self.focusable_widgets)
+        self.set_focus(self.current_focus_index)
+
+    def focus_previous(self):
+        """Move focus to previous widget."""
+        if not self.focusable_widgets:
+            return
+
+        self.current_focus_index = (self.current_focus_index - 1) % len(self.focusable_widgets)
+        self.set_focus(self.current_focus_index)
+
+    def set_focus(self, index):
+        """Set focus to widget at given index."""
+        if not self.focusable_widgets or index < 0 or index >= len(self.focusable_widgets):
+            return
+
+        # Remove focus from all widgets
+        for widget in self.focusable_widgets:
+            if widget:
+                widget.focus = False
+
+        # Set focus to target widget
+        self.current_focus_index = index
+        widget = self.focusable_widgets[index]
+        if widget:
+            widget.focus = True
+            print(f"[KEYBOARD NAV] Focus set to widget {index}: {widget} (id: {widget.id if hasattr(widget, 'id') else 'no id'})")
+
+    def activate_focused_widget(self):
+        """Activate (click) the currently focused widget."""
+        if self.current_focus_index < 0 or self.current_focus_index >= len(self.focusable_widgets):
+            return
+
+        widget = self.focusable_widgets[self.current_focus_index]
+        if not widget:
+            return
+
+        print(f"[KEYBOARD NAV] Activating widget: {widget}, type: {type(widget)}")
+
+        # Handle different widget types
+        if isinstance(widget, ToggleButton):
+            print(f"[KEYBOARD NAV] ToggleButton current state: {widget.state}, group: {widget.group}")
+
+            # Handle group behavior manually
+            if widget.group:
+                # Deselect all other buttons in the same group
+                for other_widget in self.focusable_widgets:
+                    if (isinstance(other_widget, ToggleButton) and
+                        other_widget.group == widget.group and
+                        other_widget != widget):
+                        print(f"[KEYBOARD NAV] Deselecting {other_widget.group} button")
+                        other_widget.state = 'normal'
+
+            # Toggle or set the focused button to 'down'
+            widget.state = 'down'
+            print(f"[KEYBOARD NAV] ToggleButton new state: {widget.state}")
+
+        elif isinstance(widget, Button):
+            print(f"[KEYBOARD NAV] Regular button - dispatching on_release")
+            # For regular buttons, trigger the on_release event
+            widget.dispatch('on_release')
+        # TextInput doesn't need activation - user types directly
 
     def gender_clicked(self, instance, value, gender):
         """Handle gender button click (when button is pressed down)."""
@@ -255,10 +708,18 @@ class QuestionnaireScreen(Screen):
         user = App.get_running_app().user
         self.display_user_id = user.user_id
         self.user_id_confirmed = True
+        # Rebuild focus order for confirmation panel
+        self._build_focus_order()
+        if self.focusable_widgets:
+            self.set_focus(0)
 
     def back_to_form(self):
         """Go back to the questionnaire form to allow editing."""
         self.user_id_confirmed = False
+        # Rebuild focus order for form panel
+        self._build_focus_order()
+        if self.focusable_widgets:
+            self.set_focus(0)
 
     def save_user_data(self):
         """

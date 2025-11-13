@@ -486,11 +486,11 @@ class QuestionnaireScreen(Screen):
 
         # Load configuration from YAML file
         try:
-            with open('config.yaml', 'r') as file:
+            with open('config/config.yaml', 'r') as file:
                 config_data = yaml.safe_load(file)
 
             # Load questionnaire fields from external file
-            questionnaire_file = config_data['settings'].get('questionnaire_fields_file', 'questionnaire_fields.yaml')
+            questionnaire_file = config_data['settings'].get('questionnaire_fields_file', 'config/questionnaire_fields.yaml')
             try:
                 with open(questionnaire_file, 'r') as file:
                     all_fields = yaml.safe_load(file)
@@ -969,7 +969,7 @@ class VideoPlayerScreen(Screen):
 
         try:
             # Load configuration from YAML file
-            with open('config.yaml', 'r') as file:
+            with open('config/config.yaml', 'r') as file:
                 config_data = yaml.safe_load(file)
 
             db_path = config_data['paths']['db_path']
@@ -984,7 +984,7 @@ class VideoPlayerScreen(Screen):
             self.rating_scales_height = screen_dims.get('rating_scales_height', 0.28)
 
             # Load rating scales from external file
-            rating_scales_file = config_data['settings'].get('rating_scales_file', 'rating_scales.yaml')
+            rating_scales_file = config_data['settings'].get('rating_scales_file', 'config/rating_scales.yaml')
             try:
                 with open(rating_scales_file, 'r') as file:
                     all_scales = yaml.safe_load(file)
@@ -1472,7 +1472,7 @@ class RatingApp(App):
         Triggers the write_ratings2csv script to export data and create log file.
         """
         try:
-            import write_ratings2csv
+            import utils.write_ratings2csv
             print("[INFO] Exporting ratings and generating log file...")
         except Exception as e:
             print(f"[ERROR] Failed to run write_ratings2csv: {e}")

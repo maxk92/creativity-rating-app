@@ -12,8 +12,8 @@ paths:
 
 settings:
   min_ratings_per_video: 2
-  questionnaire_fields_file: "questionnaire_fields.yaml"  # External file for questionnaire configuration
-  rating_scales_file: "rating_scales.yaml"  # External file for rating scales configuration
+  questionnaire_fields_file: "config/questionnaire_fields.yaml"  # External file for questionnaire configuration
+  rating_scales_file: "config/rating_scales.yaml"  # External file for rating scales configuration
 
 # Screen layout proportions for VideoPlayerScreen
 # These values control the relative heights of different sections (must sum to 1.0)

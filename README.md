@@ -20,14 +20,36 @@ A Kivy-based desktop application for collecting subjective ratings of soccer act
 
 ## Installation
 
-### 1. Clone or Download the Repository
+### Quick Setup (Recommended)
+
+The easiest way to set up the app on a new machine:
+
+``` bash
+git clone https://github.com/maxk92/creativity-rating-app.git
+cd creativity-rating-app
+./setup.sh
+```
+
+The setup script will:
+- Check your Python version (requires 3.8+)
+- Detect and optionally install FFmpeg if missing
+- Create a virtual environment
+- Install all Python dependencies
+- Create necessary directories
+- Verify the installation
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+#### 1. Clone or Download the Repository
 
 ``` bash
 git clone https://github.com/maxk92/creativity-rating-app.git
 cd creativity-rating-app
 ```
 
-### 2. Install System Dependencies
+#### 2. Install System Dependencies
 
 **Ubuntu/Debian:**
 
@@ -42,35 +64,64 @@ sudo apt-get install python3-pip python3-venv ffmpeg
 brew install python ffmpeg
 ```
 
-### 3. Create Virtual Environment
+#### 3. Create Virtual Environment
 
 ``` bash
 python3 -m venv venv
 source venv/bin/activate  # On macOS/Linux
 ```
 
-### 4. Install Python Dependencies
+#### 4. Install Python Dependencies
 
 ``` bash
+pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+#### 5. Create Directories
+
+``` bash
+mkdir -p user_data user_ratings backup/user_data backup/user_ratings output
 ```
 
 ## Configuration
 
-### config.yaml
+The app uses three YAML configuration files:
 
-The app uses a `config.yaml` file to specify data paths. Create or modify this file in the app's root directory:
+### 1. config.yaml (Main Configuration)
+
+Specifies data paths and screen layout:
 
 ``` yaml
 paths:
-  # Path to DuckDB database containing event metadata
-  db_path: "/path/to/your/database.duckdb"
+  db_path: "/path/to/your/database.duckdb"  # DuckDB database with event metadata
+  video_path: "/path/to/your/videos/"       # Directory containing .mp4 files
 
-  # Path to directory containing video files (.mp4)
-  video_path: "/path/to/your/videos/"
+settings:
+  min_ratings_per_video: 2  # Stop showing videos after N ratings collected
+  questionnaire_fields_file: "questionnaire_fields.yaml"  # External questionnaire config
+  rating_scales_file: "rating_scales.yaml"  # External rating scales config
+
+screen_dimensions:
+  metadata_display_height: 0.08   # Proportional heights (must sum to 1.0)
+  video_player_height: 0.46
+  control_buttons_height: 0.08
+  rating_scales_height: 0.38      # Adjust when adding/removing scales
 ```
 
-**Important Notes:** - The `video_path` should contain `.mp4` video files - Video filenames (without extension) must match the `id` column in the database - The database must have an `events` table with columns: `id`, `team`, `player`, `type`, `shot_body_part`, `pass_body_part`
+### 2. questionnaire_fields.yaml
+
+Defines demographic questions and fields. Fully customizable without code changes. See file for examples.
+
+### 3. rating_scales.yaml
+
+Defines rating dimensions and scales. Supports discrete (buttons), slider, and text input types. Fully customizable without code changes. See file for examples.
+
+**Important Notes:**
+- The `video_path` should contain `.mp4` video files
+- Video filenames (without extension) must match the `id` column in the database
+- The database must have an `events` table with columns: `id`, `team`, `player`, `type`, `shot_body_part`, `pass_body_part`
+- When adding/removing rating scales, adjust `screen_dimensions.rating_scales_height` in config.yaml
 
 ### Database Structure
 
@@ -145,23 +196,52 @@ User IDs are generated from: - First two letters of mother's given name - First 
 }
 ```
 
+### Using Images Instead of Videos
+
+The app supports displaying static images by converting them to short videos:
+
+``` bash
+# Edit the configuration at the top of the script
+# IMAGE_DURATION: how long to show the image (default: 2s)
+# BLACK_DURATION: how long to show black screen (default: 2s)
+# INPUT_FOLDER: path to your images
+# OUTPUT_FOLDER: where to save the videos
+
+./convert_images_to_videos.sh
+```
+
+The script:
+- Converts JPG, PNG, BMP, TIFF, WEBP images to MP4 videos
+- Shows each image for a configurable duration
+- Followed by a black screen for a configurable duration
+- Maintains proper aspect ratio with padding
+- Uses the same filename with .mp4 extension
+
+After conversion, update `config.yaml` to point `video_path` to the output folder.
+
 ## Adapting to Other Use Cases
 
 ### 1. Different Rating Dimensions
 
-Edit `rating.kv` to modify the rating scales:
+Edit `rating_scales.yaml` to add/modify rating scales:
+- Change `title`, `label_low`, `label_high` for existing scales
+- Add new scales by copying an existing scale block
+- Set `active: false` to disable a scale without deleting it
+- Choose scale `type`: "discrete" (buttons), "slider", or "text"
+- Mark scales as `required_to_proceed: true/false`
 
--   Search for sections labeled `Creativity Rating`, `Technical Correctness Rating`, and `Aesthetic Appeal Rating`
--   Modify the `Label` text properties to change dimension names and scale labels
--   Update corresponding methods in `CreativityRatingApp.py` (`set_likert`, `set_likert_tech`, `set_likert_aesthetic`)
+No code changes needed!
 
-### 2. Different Number of Rating Points
+### 2. Different Questionnaire Fields
 
-To change from 7-point to another scale:
+Edit `questionnaire_fields.yaml` to add/modify demographic questions:
+- Add new fields by copying an existing field block
+- Choose field `type`: "multiple_choice", "text", or "numeric"
+- Set `active: false` to disable a field without deleting it
+- Mark fields with `required_for_user_id: true` if used in ID generation
+- Group related fields with the `group` property
 
-1.  In `rating.kv`: Add/remove `ToggleButton` widgets in each rating section
-2.  In `CreativityRatingApp.py`: Update `reset_likert()` to include new button IDs
-3.  Update the button group names and values accordingly
+No code changes needed!
 
 ### 3. Different Video Sources
 
@@ -223,15 +303,24 @@ pip install ffpyplayer
 
 ## File Structure
 
-```         
+```
 creativity-rating-app/
-├── CreativityRatingApp.py    # Main application logic
-├── rating.kv                  # UI layout definition
-├── config.yaml                # Configuration file
-├── requirements.txt           # Python dependencies
-├── README.md                  # This file
-├── user_data/                 # Generated user demographics
-└── user_ratings/              # Generated rating data
+├── CreativityRatingApp.py         # Main application logic
+├── rating.kv                       # UI layout definition
+├── config.yaml                     # Main configuration (paths, settings)
+├── questionnaire_fields.yaml       # Questionnaire fields configuration
+├── rating_scales.yaml              # Rating scales configuration
+├── write_ratings2csv.py            # Data export and backup script
+├── setup.sh                        # Automated setup script
+├── convert_images_to_videos.sh     # Image to video conversion script
+├── requirements.txt                # Python dependencies
+├── .python-version                 # Recommended Python version
+├── README.md                       # This file
+├── CLAUDE.md                       # Developer documentation
+├── user_data/                      # Generated user demographics
+├── user_ratings/                   # Generated rating data
+├── backup/                         # Auto-backup of JSON files
+└── output/                         # CSV exports and logs
 ```
 
 ## Technical Details

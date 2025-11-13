@@ -12,3 +12,11 @@ __pycache__/
 backup/
 
 playground.ipynb
+
+# Development documentation (not needed in repo)
+ToDo.md
+ADAPTIVE_LAYOUT_UPDATE.md
+QUESTIONNAIRE_DYNAMIC_SYSTEM.md
+MIGRATION_NOTES.md
+REQUIRED_SCALES_FEATURE.md
+IMAGE_DISPLAY_FEATURE.md

@@ -149,6 +149,9 @@ settings:
   questionnaire_fields_file: "questionnaire_fields.yaml"  # External file for questionnaire config
   rating_scales_file: "rating_scales.yaml"  # External file for rating scales config
   modality: "video"  # "video" or "image" - determines media type
+  display_metadata: true  # Show metadata (team, player, type, etc.) at top of video screen
+  display_pitch: true  # Show pitch visualization next to video (when false, video is centered)
+  video_playback_mode: "loop"  # "loop" = video repeats automatically, "once" = plays once and cannot be restarted
 
 screen_dimensions:
   metadata_display_height: 0.08   # Proportional heights (must sum to 1.0)
@@ -202,6 +205,72 @@ Edit `rating_scales.yaml` only - no code changes needed:
 1. Add new scale entry with `active: true`
 2. Adjust `screen_dimensions.rating_scales_height` in config.yaml if necessary
 3. The app will automatically generate widgets and save new dimensions to JSON
+
+### Customizing Video Display
+
+Control what's displayed on the video rating screen via `config.yaml`:
+
+**display_metadata (true/false):**
+- When `true`: Shows metadata bar at top (team, player, type, body part, jersey number)
+- When `false`: Hides metadata bar and allocates that space to the video area
+- Useful when metadata is not relevant to your study
+
+**display_pitch (true/false):**
+- When `true`: Shows pitch visualization next to video (65/35 split)
+- When `false`: Hides pitch visualization and centers video to use full width
+- When disabled, video automatically expands to use available horizontal space
+- Useful for non-soccer studies or when spatial context is not needed
+
+**Example configurations:**
+
+```yaml
+# Standard soccer rating with all visualizations
+display_metadata: true
+display_pitch: true
+
+# Simple video rating without metadata or pitch
+display_metadata: false
+display_pitch: false  # Video takes full screen space
+
+# Show metadata but not pitch (useful for event types without spatial data)
+display_metadata: true
+display_pitch: false
+```
+
+### Customizing Video Playback
+
+Control video playback behavior via `config.yaml`:
+
+**video_playback_mode (loop/once):**
+- **"loop"** (default): Video plays in continuous loop
+  - Video automatically restarts when it reaches the end
+  - User can pause/play at any time
+  - Suitable for rating tasks where users need time to observe details
+
+- **"once"**: Video plays once and cannot be restarted
+  - Video automatically plays when loaded
+  - After reaching the end, video stops and cannot be replayed
+  - User cannot manually restart the video
+  - Video controls (play/pause/seek bar) are hidden in this mode
+  - Uses plain Video widget without controls for cleaner interface
+  - Suitable for studies requiring single exposure to stimuli
+  - Implementation: When user attempts to restart, the video is immediately stopped
+
+**Example configurations:**
+
+```yaml
+# Allow users to watch videos repeatedly (default)
+video_playback_mode: "loop"
+
+# Show video only once (e.g., for first impression ratings)
+video_playback_mode: "once"
+```
+
+**Use cases for "once" mode:**
+- First impression studies where repeat viewing would bias results
+- Time-constrained rating tasks
+- Studies requiring spontaneous reactions
+- Preventing over-analysis of stimuli
 
 ### Changing Video Sources
 

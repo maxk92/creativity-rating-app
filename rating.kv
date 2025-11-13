@@ -238,8 +238,11 @@
 <VideoPlayerScreen>:
     BoxLayout:
         orientation: 'vertical'
+        # Metadata display section - conditionally visible
         BoxLayout:
-            size_hint_y: root.metadata_display_height
+            size_hint_y: root.metadata_display_height if root.display_metadata else 0
+            opacity: 1 if root.display_metadata else 0
+            disabled: not root.display_metadata
             ColoredLabel:
                 id: team_label
                 font_size: root.height/40
@@ -265,19 +268,38 @@
                 font_size: root.height/40
                 text: 'No Jersey Number'
                 bold: True
+        # Video and pitch display section
         BoxLayout:
-            size_hint_y: root.video_player_height
+            size_hint_y: root.video_player_height + (root.metadata_display_height if not root.display_metadata else 0)
             orientation: 'horizontal'
 
+            # Use VideoPlayer with controls for "loop" mode
             VideoPlayer:
                 id: video_player
-                size_hint_x: .65
+                size_hint_x: (1 if not root.display_pitch else .5) if root.video_playback_mode == 'loop' else 0
                 source: ''
                 state: 'stop'
-                options: {'eos': 'loop'}
+                options: {'eos': 'loop'} if root.video_playback_mode == 'loop' else {'eos': 'stop'}
                 allow_stretch: True
+                on_state: root.handle_video_state_change(self.state) if root.video_playback_mode == 'once' else None
+                opacity: 1 if root.video_playback_mode == 'loop' else 0
+                disabled: root.video_playback_mode == 'once'
+            # Use plain Video widget without controls for "once" mode
+            Video:
+                id: video_player_once
+                size_hint_x: (1 if not root.display_pitch else .5) if root.video_playback_mode == 'once' else 0
+                source: ''
+                state: 'stop'
+                options: {'eos': 'stop'}
+                allow_stretch: True
+                on_state: root.handle_video_state_change(self.state)
+                opacity: 1 if root.video_playback_mode == 'once' else 0
+                disabled: root.video_playback_mode == 'loop'
+            # Pitch visualization container - conditionally visible
             BoxLayout:
-                size_hint_x: .35
+                size_hint_x: .35 if root.display_pitch else 0
+                opacity: 1 if root.display_pitch else 0
+                disabled: not root.display_pitch
                 orientation: 'vertical'
                 canvas.before:
                     Color:

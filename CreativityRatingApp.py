@@ -954,6 +954,11 @@ class VideoPlayerScreen(Screen):
     action_not_recognized = BooleanProperty(False)
     has_any_rating = BooleanProperty(False)
 
+    # Display options (configurable via config.yaml)
+    display_metadata = BooleanProperty(True)
+    display_pitch = BooleanProperty(True)
+    video_playback_mode = StringProperty('loop')  # 'loop' or 'once'
+
     # Screen dimension properties (configurable via config.yaml)
     metadata_display_height = NumericProperty(0.08)
     video_player_height = NumericProperty(0.56)
@@ -966,6 +971,7 @@ class VideoPlayerScreen(Screen):
         self.scale_configs = []  # Will store active scale configurations
         self.scale_widgets = {}  # Will store references to scale widget groups
         self.required_scales = []  # Will store titles of scales that are required
+        self.video_has_played = False  # Track if current video has played once (for "once" mode)
 
         try:
             # Load configuration from YAML file
@@ -975,6 +981,11 @@ class VideoPlayerScreen(Screen):
             db_path = config_data['paths']['db_path']
             self.path_videos = config_data['paths']['video_path']
             min_ratings_per_video = config_data['settings']['min_ratings_per_video']
+
+            # Load display options
+            self.display_metadata = config_data['settings'].get('display_metadata', True)
+            self.display_pitch = config_data['settings'].get('display_pitch', True)
+            self.video_playback_mode = config_data['settings'].get('video_playback_mode', 'loop')
 
             # Load screen dimensions configuration
             screen_dims = config_data.get('screen_dimensions', {})
@@ -1298,8 +1309,29 @@ class VideoPlayerScreen(Screen):
             self.ids.btn_notrec.state = 'normal'
         self.action_not_recognized = False
 
+    @property
+    def active_video_player(self):
+        """Return the active video player based on playback mode."""
+        if self.video_playback_mode == 'once':
+            return self.ids.video_player_once
+        else:
+            return self.ids.video_player
 
-
+    def handle_video_state_change(self, state):
+        """
+        Handle video player state changes for "once" playback mode.
+        Prevents video restart after it has played once.
+        """
+        if self.video_playback_mode == 'once':
+            # When video starts playing for the first time
+            if state == 'play' and not self.video_has_played:
+                self.video_has_played = True
+            # If user tries to restart after video has played, prevent it
+            elif state == 'play' and self.video_has_played:
+                self.active_video_player.state = 'stop'
+            # When video naturally stops (eos), keep it stopped
+            elif state == 'stop' and self.video_has_played:
+                pass  # Video has finished, keep it stopped
 
     def load_video(self):
         """
@@ -1312,8 +1344,9 @@ class VideoPlayerScreen(Screen):
             action_id = os.path.splitext(os.path.basename(video_file))[0]
 
             # Load video and start playback
-            self.ids.video_player.source = os.path.join(self.path_videos, video_file)
-            self.ids.video_player.state = 'play'
+            self.active_video_player.source = os.path.join(self.path_videos, video_file)
+            self.video_has_played = False  # Reset flag for new video
+            self.active_video_player.state = 'play'
 
             # Load and display metadata for this action
             self.action_id = action_id
@@ -1385,7 +1418,7 @@ class VideoPlayerScreen(Screen):
 
         # All videos have been rated
         self.ids.info_label.text = "No more videos to rate."
-        self.ids.video_player.opacity = 0
+        self.active_video_player.opacity = 0
         self.ids.submit_button.opacity = .5
 
 

@@ -101,6 +101,9 @@ settings:
   min_ratings_per_video: 2  # Stop showing videos after N ratings collected
   questionnaire_fields_file: "questionnaire_fields.yaml"  # External questionnaire config
   rating_scales_file: "rating_scales.yaml"  # External rating scales config
+  display_metadata: true  # Show metadata (team, player, etc.) at top
+  display_pitch: true  # Show pitch visualization next to video
+  video_playback_mode: "loop"  # "loop" or "once" - video playback behavior
 
 screen_dimensions:
   metadata_display_height: 0.08   # Proportional heights (must sum to 1.0)

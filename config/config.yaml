@@ -8,12 +8,16 @@ paths:
   #video_path: "/Volumes/Elements/videos_all"
   
   # dummy videos on localhost max
-  video_path: "/home/max/drive/projects/3_Creativity/creativity-rating-app/videos_all/"
+  #video_path: "/home/max/drive/projects/3_Creativity/creativity-rating-app/videos_all/"
+  video_path: "/home/max/drive/projects/3_Creativity/creativity-rating-app/videos/"
 
 settings:
   min_ratings_per_video: 2
   questionnaire_fields_file: "config/questionnaire_fields.yaml"  # External file for questionnaire configuration
   rating_scales_file: "config/rating_scales.yaml"  # External file for rating scales configuration
+  display_metadata: true  # Show metadata (team, player, type, etc.) at top of video screen
+  display_pitch: true  # Show pitch visualization next to video
+  video_playback_mode: "loop"  # "loop" = video repeats, "once" = plays once and cannot be restarted
 
 # Screen layout proportions for VideoPlayerScreen
 # These values control the relative heights of different sections (must sum to 1.0)

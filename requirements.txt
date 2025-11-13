@@ -8,7 +8,8 @@ ffpyplayer==4.5.3
 filetype==1.2.0
 idna==3.10
 Kivy==2.3.1
-Kivy-Garden==0.1.5
+matplotlib>=3.7.2
+mplsoccer>=1.6.0
 numpy==2.3.3
 panda==0.3.1
 pandas==2.3.3

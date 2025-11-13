@@ -18,16 +18,20 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.uix.popup import Popup
 from kivy.uix.slider import Slider
+from kivy.uix.image import Image as KivyImage
 from kivy.properties import NumericProperty, BooleanProperty, StringProperty, DictProperty
 from kivy.core.window import Window
+from kivy.core.image import Image as CoreImage
 from kivy.graphics import Color, Rectangle, Line
 import random
 from datetime import datetime
 import duckdb
 import yaml
-from kivy_garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import mplsoccer
+from io import BytesIO
 
 kivy.require("1.9.1")
 
@@ -160,8 +164,11 @@ class User:
     """
     def __init__(self):
         self.user_id = ''
+        self.data = {}  # Stores all questionnaire field responses
+        # Legacy fields for backward compatibility
         self.gender = 'Not specified'
         self.age = 0
+        self.nationality = ''
         self.player_exp = 0
         self.coach_exp = 0
         self.watch_exp = 0
@@ -463,7 +470,7 @@ class LoginScreen(Screen):
 class QuestionnaireScreen(Screen):
     """
     Screen for collecting user demographic and experience information.
-    Captures gender, age, soccer experience (as player, coach, watcher), and license info.
+    Dynamically builds form based on config.yaml questionnaire_fields.
     Supports keyboard navigation via Tab key.
     """
     user_id_confirmed = BooleanProperty(False)  # Track whether user_id has been displayed
@@ -474,6 +481,220 @@ class QuestionnaireScreen(Screen):
         self.focusable_widgets = []  # Will be populated in on_enter
         self.current_focus_index = -1
         self._keyboard_bound = False
+        self.field_configs = []  # Will store active field configurations
+        self.field_widgets = {}  # Will store references to field widgets
+
+        # Load configuration from YAML file
+        try:
+            with open('config.yaml', 'r') as file:
+                config_data = yaml.safe_load(file)
+
+            # Load questionnaire fields configuration
+            all_fields = config_data.get('questionnaire_fields', [])
+            # Filter only active fields
+            self.field_configs = [field for field in all_fields if field.get('active', False)]
+
+        except FileNotFoundError:
+            print("[ERROR] config.yaml file not found.")
+        except KeyError as e:
+            print(f"[ERROR] Missing key in config.yaml: {e}.")
+
+    def build_questionnaire_form(self):
+        """
+        Dynamically build questionnaire form widgets based on configuration.
+        Called after the .kv file is loaded to populate the form_container.
+        Calculates optimal widget heights to fill available screen space.
+        """
+        if 'form_container' not in self.ids:
+            print("[ERROR] form_container not found in .kv file")
+            return
+
+        container = self.ids.form_container
+        container.clear_widgets()
+
+        # Count total number of rows we'll create
+        # (accounts for grouped fields being in one row)
+        num_rows = 0
+        processed_groups = set()
+        for field_config in self.field_configs:
+            group = field_config.get('group', None)
+            if group:
+                if group not in processed_groups:
+                    num_rows += 1
+                    processed_groups.add(group)
+            else:
+                num_rows += 1
+
+        # Calculate optimal row height
+        # Available space = screen height - header (48dp) - nav buttons (60dp) - padding
+        # Minimum row height = 55dp for readability
+        # Maximum row height = 80dp to prevent excessive spacing
+        if num_rows > 0:
+            available_height = self.height - 48 - 60 - 40  # header, buttons, padding
+            calculated_height = available_height / num_rows
+            row_height = max(55, min(80, calculated_height))
+        else:
+            row_height = 60
+
+        for idx, field_config in enumerate(self.field_configs):
+            field_type = field_config.get('type', 'text')
+            field_name = field_config.get('field_name', f'field_{idx}')
+            title = field_config.get('title', '')
+            hint_text = field_config.get('hint_text', '')
+            max_length = field_config.get('max_length', None)
+            group = field_config.get('group', None)
+
+            if field_type == 'multiple_choice':
+                # Create a row with label and toggle buttons
+                row = BoxLayout(size_hint_y=None, height=row_height, spacing=10, padding=[5, 5])
+
+                if title:
+                    label = Label(
+                        text=title,
+                        font_size=self.height/45,
+                        size_hint_x=0.4,
+                        halign='right',
+                        valign='middle',
+                        text_size=(None, None)
+                    )
+                    label.bind(size=lambda inst, val: setattr(inst, 'text_size', (inst.width, inst.height)))
+                    row.add_widget(label)
+
+                # Create button container
+                button_container = BoxLayout(size_hint_x=0.6 if title else 1.0, spacing=5)
+
+                options = field_config.get('options', [])
+                group_name = f'group_{field_name}'
+
+                self.field_widgets[field_name] = []
+                for option in options:
+                    btn = FocusableToggleButton(
+                        text=str(option),
+                        font_size=self.height/45
+                    )
+                    btn.group = group_name
+                    btn.bind(state=lambda inst, val, fn=field_name, opt=option:
+                            self._set_field_value(fn, opt) if val == 'down' else None)
+                    button_container.add_widget(btn)
+                    self.field_widgets[field_name].append(btn)
+
+                row.add_widget(button_container)
+                container.add_widget(row)
+
+            elif field_type in ('text', 'numeric'):
+                # Handle grouped fields (like birthday with multiple inputs)
+                if group:
+                    # Check if we need to create a new group row
+                    group_key = f'group_row_{group}'
+                    if group_key not in self.field_widgets:
+                        # Create new group row
+                        row = BoxLayout(size_hint_y=None, height=row_height, spacing=5, padding=[5, 5])
+
+                        # Find the first field in this group to get the title
+                        first_field = next((f for f in self.field_configs if f.get('group') == group and f.get('title')), None)
+                        if first_field and first_field.get('title'):
+                            label = Label(
+                                text=first_field.get('title'),
+                                font_size=self.height/45,
+                                size_hint_x=0.25,
+                                halign='right',
+                                valign='middle',
+                                text_size=(None, None)
+                            )
+                            label.bind(size=lambda inst, val: setattr(inst, 'text_size', (inst.width, inst.height)))
+                            row.add_widget(label)
+
+                        self.field_widgets[group_key] = row
+                        container.add_widget(row)
+                    else:
+                        row = self.field_widgets[group_key]
+
+                    # Add input to group row
+                    text_input = FocusableTextInput(
+                        hint_text=hint_text,
+                        font_size=self.height/45,
+                        multiline=False,
+                        input_filter='int' if field_type == 'numeric' else None,
+                        padding=[10, 5]  # Minimal vertical padding
+                    )
+                    if max_length:
+                        text_input.bind(text=lambda inst, val, ml=max_length:
+                                      setattr(inst, 'text', val[:ml]) if len(val) > ml else None)
+
+                    text_input.bind(text=lambda inst, val, fn=field_name:
+                                  self._set_field_value(fn, val))
+                    row.add_widget(text_input)
+                    self.field_widgets[field_name] = text_input
+                else:
+                    # Single text input
+                    text_input = FocusableTextInput(
+                        hint_text=hint_text,
+                        font_size=self.height/45,
+                        size_hint_y=None,
+                        height=row_height - 10,  # Slightly smaller to account for padding
+                        multiline=False,
+                        input_filter='int' if field_type == 'numeric' else None,
+                        padding=[10, 5]  # Minimal vertical padding
+                    )
+                    if max_length:
+                        text_input.bind(text=lambda inst, val, ml=max_length:
+                                      setattr(inst, 'text', val[:ml]) if len(val) > ml else None)
+
+                    text_input.bind(text=lambda inst, val, fn=field_name:
+                                  self._set_field_value(fn, val))
+                    container.add_widget(text_input)
+                    self.field_widgets[field_name] = text_input
+
+    def _set_field_value(self, field_name, value):
+        """Set the value for a specific field and update User object."""
+        user = App.get_running_app().user
+        user.data[field_name] = value
+
+        # Update legacy fields for backward compatibility
+        if field_name == 'gender':
+            user.set_user_gender(value)
+        elif field_name == 'age':
+            user.set_user_age(value)
+        elif field_name == 'nationality':
+            user.nationality = value
+        elif field_name == 'player_exp':
+            user.set_player_exp(value)
+        elif field_name == 'coach_exp':
+            user.set_coach_exp(value)
+        elif field_name == 'watch_exp':
+            user.set_watch_exp(value)
+        elif field_name == 'license':
+            user.set_user_license(value)
+        elif field_name == 'mother_initials':
+            user.mother_initials = value[:2].lower() if value else ''
+            user.set_user_id()
+        elif field_name == 'father_initials':
+            user.father_initials = value[:2].lower() if value else ''
+            user.set_user_id()
+        elif field_name == 'siblings':
+            try:
+                user.siblings = int(value) if value else 0
+            except ValueError:
+                user.siblings = 0
+            user.set_user_id()
+        elif field_name == 'birth_day':
+            try:
+                user.birth_day = int(value) if value else 0
+            except ValueError:
+                user.birth_day = 0
+            user.set_user_id()
+        elif field_name == 'birth_month':
+            try:
+                user.birth_month = int(value) if value else 0
+            except ValueError:
+                user.birth_month = 0
+            user.set_user_id()
+        elif field_name == 'birth_year':
+            try:
+                user.birth_year = int(value) if value else 0
+            except ValueError:
+                user.birth_year = 0
+            user.set_user_id()
 
     def on_enter(self, *args):
         """Called when screen is displayed. Set up keyboard and focus order."""
@@ -481,11 +702,32 @@ class QuestionnaireScreen(Screen):
             Window.bind(on_key_down=self._on_keyboard_down)
             self._keyboard_bound = True
 
+        # Build form on first entry or when height changes
+        if not hasattr(self, '_form_built'):
+            # Bind to height changes to rebuild form with correct proportions
+            self.bind(height=self._on_height_change)
+            self.build_questionnaire_form()
+            self._form_built = True
+            self._last_height = self.height
+
         self._build_focus_order()
         print(f"[KEYBOARD NAV] QuestionnaireScreen: Initialized with {len(self.focusable_widgets)} focusable widgets")
         # Set initial focus to first widget
         if self.focusable_widgets:
             self.set_focus(0)
+
+    def _on_height_change(self, instance, height):
+        """Rebuild form when screen height changes significantly."""
+        if not hasattr(self, '_last_height'):
+            self._last_height = height
+            return
+
+        # Only rebuild if height changed significantly (more than 10%)
+        if abs(height - self._last_height) / self._last_height > 0.1:
+            print(f"[INFO] Screen height changed from {self._last_height} to {height}, rebuilding form")
+            self._last_height = height
+            self.build_questionnaire_form()
+            self._build_focus_order()
 
     def on_leave(self, *args):
         """Called when leaving screen. Clean up keyboard binding."""
@@ -494,7 +736,7 @@ class QuestionnaireScreen(Screen):
             self._keyboard_bound = False
 
     def _build_focus_order(self):
-        """Build ordered list of focusable widgets based on form layout."""
+        """Build ordered list of focusable widgets based on dynamic form layout."""
         if self.user_id_confirmed:
             # Confirmation panel - only buttons
             self.focusable_widgets = [
@@ -502,36 +744,31 @@ class QuestionnaireScreen(Screen):
                 self.ids.get('btn_proceed_video')
             ]
         else:
-            # Main form panel - all inputs in order
-            self.focusable_widgets = [
-                # Gender buttons
-                self.ids.get('gender_m'),
-                self.ids.get('gender_f'),
-                self.ids.get('gender_d'),
-                # Age input
-                self.ids.get('input_age'),
-                # Experience inputs
-                self.ids.get('input_player_exp'),
-                self.ids.get('input_coach_exp'),
-                self.ids.get('input_watch_exp'),
-                # License buttons
-                self.ids.get('license_none'),
-                self.ids.get('license_b'),
-                self.ids.get('license_a'),
-                self.ids.get('license_pro'),
-                # User ID components
-                self.ids.get('input_mother_initials'),
-                self.ids.get('input_father_initials'),
-                self.ids.get('input_siblings'),
-                self.ids.get('input_birth_day'),
-                self.ids.get('input_birth_month'),
-                self.ids.get('input_birth_year'),
-                # Navigation buttons
-                self.ids.get('btn_back'),
-                self.ids.get('btn_next')
-            ]
+            # Main form panel - collect all dynamically created widgets
+            self.focusable_widgets = []
 
-        # Filter out None values (widgets that don't exist)
+            # Add all field widgets in order
+            for field_name, widget in self.field_widgets.items():
+                # Skip group rows
+                if field_name.startswith('group_row_'):
+                    continue
+
+                if isinstance(widget, list):
+                    # Multiple choice - add all buttons
+                    self.focusable_widgets.extend(widget)
+                else:
+                    # Single widget
+                    self.focusable_widgets.append(widget)
+
+            # Add navigation buttons
+            back_btn = self.ids.get('btn_back')
+            next_btn = self.ids.get('btn_next')
+            if back_btn:
+                self.focusable_widgets.append(back_btn)
+            if next_btn:
+                self.focusable_widgets.append(next_btn)
+
+        # Filter out None values
         self.focusable_widgets = [w for w in self.focusable_widgets if w is not None]
 
     def _on_keyboard_down(self, window, key, scancode, codepoint, modifiers):
@@ -632,74 +869,7 @@ class QuestionnaireScreen(Screen):
             widget.dispatch('on_release')
         # TextInput doesn't need activation - user types directly
 
-    def gender_clicked(self, instance, value, gender):
-        """Handle gender button click (when button is pressed down)."""
-        if value == "down":
-            App.get_running_app().user.set_user_gender(gender)
-
-    def age_input(self, instance, value):
-        App.get_running_app().user.set_user_age(value)
-
-    def player_exp_input(self, instance, value):
-        App.get_running_app().user.set_player_exp(value)
-
-    def coach_exp_input(self, instance, value):
-        App.get_running_app().user.set_coach_exp(value)
-
-    def watch_exp_input(self, instance, value):
-        App.get_running_app().user.set_watch_exp(value)
-
-    def mother_initials_input(self, instance, value):
-        """Handle mother's initials input (first two letters, converted to lowercase)."""
-        user = App.get_running_app().user
-        user.mother_initials = value[:2].lower()  # Take only first 2 characters
-        user.set_user_id()
-
-    def father_initials_input(self, instance, value):
-        """Handle father's initials input (first two letters, converted to lowercase)."""
-        user = App.get_running_app().user
-        user.father_initials = value[:2].lower()  # Take only first 2 characters
-        user.set_user_id()
-
-    def siblings_input(self, instance, value):
-        """Handle number of siblings input."""
-        user = App.get_running_app().user
-        try:
-            user.siblings = int(value) if value else 0
-        except ValueError:
-            user.siblings = 0
-        user.set_user_id()
-
-    def birth_day_input(self, instance, value):
-        """Handle birth day input."""
-        user = App.get_running_app().user
-        try:
-            user.birth_day = int(value) if value else 0
-        except ValueError:
-            user.birth_day = 0
-        user.set_user_id()
-
-    def birth_month_input(self, instance, value):
-        """Handle birth month input."""
-        user = App.get_running_app().user
-        try:
-            user.birth_month = int(value) if value else 0
-        except ValueError:
-            user.birth_month = 0
-        user.set_user_id()
-
-    def birth_year_input(self, instance, value):
-        """Handle birth year input."""
-        user = App.get_running_app().user
-        try:
-            user.birth_year = int(value) if value else 0
-        except ValueError:
-            user.birth_year = 0
-        user.set_user_id()
-
-    def license_clicked(self, instance, value, license):
-        if value == "down":
-            App.get_running_app().user.set_user_license(license)
+    # Note: Field value callbacks are now handled by _set_field_value method
 
     def show_user_id_confirmation(self):
         """
@@ -726,6 +896,7 @@ class QuestionnaireScreen(Screen):
         """
         Save user demographic data to a timestamped JSON file.
         Creates user_data directory if it doesn't exist.
+        Saves both legacy fields and all dynamic field data.
         """
         try:
             user = App.get_running_app().user
@@ -735,17 +906,24 @@ class QuestionnaireScreen(Screen):
             filename = f"{user.user_id}.json"
             path = os.path.join('user_data', filename)
 
+            # Build data dict with legacy fields and all dynamic fields
+            data = {
+                'user_id': user.user_id,
+                'gender': user.gender,
+                'age': user.age,
+                'nationality': user.nationality,
+                'license': user.license,
+                'player_exp': user.player_exp,
+                'coach_exp': user.coach_exp,
+                'watch_exp': user.watch_exp,
+                'saved_at': ts.isoformat(timespec='seconds')
+            }
+
+            # Add all dynamic field data
+            data.update(user.data)
+
             with open(path, 'w') as f:
-                json.dump({
-                    'user_id': user.user_id,
-                    'gender': user.gender,
-                    'age': user.age,
-                    'license': user.license,
-                    'player_exp': user.player_exp,
-                    'coach_exp': user.coach_exp,
-                    'watch_exp': user.watch_exp,
-                    'saved_at': ts.isoformat(timespec='seconds')
-                }, f)
+                json.dump(data, f, indent=2)
             print(f"[INFO] User data saved: {filename}")
         except Exception as e:
             print(f"[ERROR] Failed to save user data: {e}")
@@ -778,6 +956,7 @@ class VideoPlayerScreen(Screen):
         self.index = 0  # Current video index
         self.scale_configs = []  # Will store active scale configurations
         self.scale_widgets = {}  # Will store references to scale widget groups
+        self.required_scales = []  # Will store titles of scales that are required
 
         try:
             # Load configuration from YAML file
@@ -799,6 +978,13 @@ class VideoPlayerScreen(Screen):
             all_scales = config_data.get('rating_scales', [])
             # Filter only active scales
             self.scale_configs = [scale for scale in all_scales if scale.get('active', False)]
+
+            # Track which scales are required for proceeding
+            # Default to required if not specified
+            self.required_scales = [
+                scale.get('title') for scale in self.scale_configs
+                if scale.get('required_to_proceed', True)
+            ]
 
             # Initialize scale_values dictionary with None for each active scale
             for scale in self.scale_configs:
@@ -1007,11 +1193,15 @@ class VideoPlayerScreen(Screen):
     def set_scale_value(self, scale_title, value):
         """Set the value for a specific scale and update has_any_rating property."""
         self.scale_values[scale_title] = value
-        # Update has_any_rating - require ALL scales to have values
-        self.has_any_rating = all(
-            v is not None and v != ''
-            for v in self.scale_values.values()
-        )
+        # Update has_any_rating - require only REQUIRED scales to have values
+        # or if action_not_recognized is True
+        if self.action_not_recognized:
+            self.has_any_rating = True
+        else:
+            self.has_any_rating = all(
+                self.scale_values.get(title) is not None and self.scale_values.get(title) != ''
+                for title in self.required_scales
+            )
 
     def on_enter(self, *args):
         """Called when this screen is displayed. Builds scales and loads the first/next video."""
@@ -1158,9 +1348,15 @@ class VideoPlayerScreen(Screen):
             fig.tight_layout(pad=0)
             fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
-            # Add canvas to Kivy
-            canvas = FigureCanvasKivyAgg(fig)
-            self.ids.plot_container.add_widget(canvas)
+            # Save figure to BytesIO buffer as PNG
+            buf = BytesIO()
+            fig.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0)
+            buf.seek(0)
+
+            # Create Kivy Image from buffer
+            core_image = CoreImage(buf, ext='png')
+            kivy_image = KivyImage(texture=core_image.texture)
+            self.ids.plot_container.add_widget(kivy_image)
 
             plt.close(fig)  # Prevent memory leak
 

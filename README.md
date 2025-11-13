@@ -243,6 +243,8 @@ creativity-rating-app/
 -   **DuckDB 1.4.0**: Embedded analytical database
 -   **pandas 2.3.3**: Data manipulation
 -   **PyYAML 6.0.3**: Configuration file parsing
+-   **matplotlib 3.7.2+**: Pitch visualization (uses Agg backend)
+-   **mplsoccer 1.6.0+**: Soccer pitch drawing
 
 ### Architecture
 

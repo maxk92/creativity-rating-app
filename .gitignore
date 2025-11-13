@@ -10,6 +10,8 @@ output/
 output/*
 __pycache__/
 backup/
+images/
+videos/
 
 playground.ipynb
 

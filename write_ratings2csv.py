@@ -55,17 +55,32 @@ df_ratings.to_csv('output/ratings.csv')
 print(f"Loaded {len(df_ratings)} ratings from {df_ratings['filename'].nunique()} files")
 print(f"Number of rated actions: {df_ratings['id'].nunique()}")
 
+# Dynamically identify scale columns
+# These are all columns except metadata columns
+metadata_columns = ['user_id', 'id', 'action_not_recognized', 'file_created_at', 'filename']
+all_columns = df_ratings.columns.tolist()
+scale_columns = [col for col in all_columns if col not in metadata_columns]
+
+print(f"Detected scale columns: {scale_columns}")
+
+# Build dynamic aggregation dictionary
+agg_dict = {}
+
+# Add count using the first scale column (or 'id' if no scales found)
+count_column = scale_columns[0] if scale_columns else 'id'
+agg_dict['num_ratings'] = (count_column, 'count')
+
+# Add mean and std for each scale column
+for scale_col in scale_columns:
+    agg_dict[f'mean_{scale_col}'] = (scale_col, 'mean')
+    agg_dict[f'std_{scale_col}'] = (scale_col, 'std')
+
+# Add mean for action_not_recognized if present
+if 'action_not_recognized' in all_columns:
+    agg_dict['mean_action_not_recognized'] = ('action_not_recognized', 'mean')
+
 # Store mean ratings per action
-df_mean_ratings = df_ratings.groupby('id').agg(
-    num_ratings=('action_rating', 'count'),
-    mean_rating=('action_rating', 'mean'),
-    std_rating=('action_rating', 'std'),
-    mean_technical_correctness=('technical_correctness', 'mean'),
-    std_technical_correctness=('technical_correctness', 'std'),
-    mean_aesthetic_appeal=('aesthetic_appeal', 'mean'),
-    std_aesthetic_appeal=('aesthetic_appeal', 'std'),
-    mean_action_not_recognized=('action_not_recognized', 'mean')
-).round(3)
+df_mean_ratings = df_ratings.groupby('id').agg(**agg_dict).round(3)
 
 df_mean_ratings.to_csv('output/mean_ratings.csv')
 

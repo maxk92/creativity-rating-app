@@ -17,7 +17,8 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.uix.popup import Popup
-from kivy.properties import NumericProperty, BooleanProperty, StringProperty
+from kivy.uix.slider import Slider
+from kivy.properties import NumericProperty, BooleanProperty, StringProperty, DictProperty
 from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle, Line
 import random
@@ -758,19 +759,25 @@ class QuestionnaireScreen(Screen):
 class VideoPlayerScreen(Screen):
     """
     Main screen for video playback and rating collection.
-    Displays soccer action videos and collects ratings on three dimensions:
-    creativity, technical correctness, and aesthetic appeal.
-    Also allows marking actions as "not recognized".
+    Displays soccer action videos with customizable rating scales.
+    Allows marking actions as "not recognized".
     """
-    # Kivy properties for tracking ratings (7-point Likert scale: 1-7)
-    current_rating = NumericProperty(None, allownone=True)       # Creativity
-    technical_rating = NumericProperty(None, allownone=True)     # Technical correctness
-    aesthetic_rating = NumericProperty(None, allownone=True)     # Aesthetic appeal
-    action_not_recognized = BooleanProperty(False)               # Action not recognized
+    # Dynamic rating storage - keys are scale titles, values are the ratings
+    scale_values = DictProperty({})
+    action_not_recognized = BooleanProperty(False)
+    has_any_rating = BooleanProperty(False)
+
+    # Screen dimension properties (configurable via config.yaml)
+    metadata_display_height = NumericProperty(0.08)
+    video_player_height = NumericProperty(0.56)
+    control_buttons_height = NumericProperty(0.08)
+    rating_scales_height = NumericProperty(0.28)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.index = 0  # Current video index
+        self.scale_configs = []  # Will store active scale configurations
+        self.scale_widgets = {}  # Will store references to scale widget groups
 
         try:
             # Load configuration from YAML file
@@ -780,6 +787,23 @@ class VideoPlayerScreen(Screen):
             db_path = config_data['paths']['db_path']
             self.path_videos = config_data['paths']['video_path']
             min_ratings_per_video = config_data['settings']['min_ratings_per_video']
+
+            # Load screen dimensions configuration
+            screen_dims = config_data.get('screen_dimensions', {})
+            self.metadata_display_height = screen_dims.get('metadata_display_height', 0.08)
+            self.video_player_height = screen_dims.get('video_player_height', 0.56)
+            self.control_buttons_height = screen_dims.get('control_buttons_height', 0.08)
+            self.rating_scales_height = screen_dims.get('rating_scales_height', 0.28)
+
+            # Load rating scales configuration
+            all_scales = config_data.get('rating_scales', [])
+            # Filter only active scales
+            self.scale_configs = [scale for scale in all_scales if scale.get('active', False)]
+
+            # Initialize scale_values dictionary with None for each active scale
+            for scale in self.scale_configs:
+                self.scale_values[scale['title']] = None
+
         except FileNotFoundError:
             print("[ERROR] config.yaml file not found.")
         except KeyError as e:
@@ -836,9 +860,165 @@ class VideoPlayerScreen(Screen):
             # Create empty DataFrame as fallback
             self.metadata = pd.DataFrame(columns=["id", "team", "player", "jersey_number", "type", "body_part", "start_x", "start_y", "end_x", "end_y"])
 
+    def build_rating_scales(self):
+        """
+        Dynamically build rating scale widgets based on configuration.
+        Called after the .kv file is loaded to populate the scales_container.
+        """
+        if 'scales_container' not in self.ids:
+            print("[ERROR] scales_container not found in .kv file")
+            return
+
+        container = self.ids.scales_container
+        container.clear_widgets()
+
+        # Calculate size_hint_y for each scale based on number of active scales
+        num_scales = len(self.scale_configs)
+        if num_scales == 0:
+            return
+
+        # Allocate space proportionally for each scale
+        scale_height = 1.0 / num_scales
+
+        for idx, scale_config in enumerate(self.scale_configs):
+            scale_type = scale_config.get('type', 'discrete')
+            title = scale_config.get('title', f'Scale {idx+1}')
+            label_low = scale_config.get('label_low', '')
+            label_high = scale_config.get('label_high', '')
+
+            # Create container for this scale
+            scale_box = BoxLayout(
+                orientation='vertical',
+                size_hint_y=scale_height,
+                padding=[10, 5, 10, 5]
+            )
+
+            # Add gray background
+            with scale_box.canvas.before:
+                Color(100/255, 100/255, 100/255, 1)
+                rect = Rectangle(pos=scale_box.pos, size=scale_box.size)
+                scale_box.bind(pos=lambda inst, val, r=rect: setattr(r, 'pos', val),
+                              size=lambda inst, val, r=rect: setattr(r, 'size', val))
+
+            # Top row: Title (25%) | Scale widgets (75%)
+            top_row = BoxLayout(size_hint_y=0.7, spacing=10)
+
+            # Title label on the left (25% width)
+            title_label = Label(
+                text=f'{title}:',
+                font_size=self.height/40,
+                size_hint_x=0.2,
+                halign='right',
+                valign='middle',
+                text_size=(None, None)
+            )
+            title_label.bind(size=lambda inst, val: setattr(inst, 'text_size', (inst.width, inst.height)))
+            top_row.add_widget(title_label)
+
+            # Scale widgets container (75% width)
+            scale_widget_box = BoxLayout(size_hint_x=0.8, spacing=6)
+
+            if scale_type == 'discrete':
+                # Discrete scale with toggle buttons
+                values = scale_config.get('values', [1, 2, 3, 4, 5, 6, 7])
+                group_name = f'scale_{idx}'
+                self.scale_widgets[title] = []
+
+                for value in values:
+                    btn = ToggleButton(
+                        text=str(value),
+                        group=group_name
+                    )
+                    btn.bind(state=lambda inst, val, t=title, v=value:
+                            self.set_scale_value(t, v) if val == 'down' else None)
+                    scale_widget_box.add_widget(btn)
+                    self.scale_widgets[title].append(btn)
+
+            elif scale_type == 'slider':
+                # Slider scale
+                slider_min = scale_config.get('slider_min', 0)
+                slider_max = scale_config.get('slider_max', 100)
+
+                slider = Slider(
+                    min=slider_min,
+                    max=slider_max,
+                    value=(slider_min + slider_max) / 2,
+                    orientation='horizontal'
+                )
+
+                slider.bind(value=lambda inst, val, t=title: self.set_scale_value(t, val))
+
+                scale_widget_box.add_widget(slider)
+                self.scale_widgets[title] = [slider]
+
+            elif scale_type == 'text':
+                # Text input
+                text_input = TextInput(
+                    multiline=False,
+                    hint_text='Enter your response...'
+                )
+                text_input.bind(text=lambda inst, val, t=title: self.set_scale_value(t, val))
+                scale_widget_box.add_widget(text_input)
+                self.scale_widgets[title] = [text_input]
+
+            # Add scale widgets to top row
+            top_row.add_widget(scale_widget_box)
+            scale_box.add_widget(top_row)
+
+            # Bottom row: Empty spacer (20%) | Low/High labels (80%)
+            bottom_row = BoxLayout(size_hint_y=0.3, spacing=10)
+
+            # Empty spacer on the left (20% width to align with title)
+            bottom_row.add_widget(Label(text='', size_hint_x=0.2))
+
+            # Labels container (80% width to align with scale widgets)
+            labels_box = BoxLayout(size_hint_x=0.8)
+
+            # Low label - aligned to the left edge
+            low_label = Label(
+                text=label_low,
+                font_size=self.height/75,
+                halign='left',
+                valign='middle',
+                padding=(5, 0)
+            )
+            low_label.bind(size=lambda inst, val: setattr(inst, 'text_size', (inst.width, inst.height)))
+            labels_box.add_widget(low_label)
+
+            # Spacer in the middle
+            labels_box.add_widget(Label(text=''))
+
+            # High label - aligned to the right edge
+            high_label = Label(
+                text=label_high,
+                font_size=self.height/75,
+                halign='right',
+                valign='middle',
+                padding=(0, 5)
+            )
+            high_label.bind(size=lambda inst, val: setattr(inst, 'text_size', (inst.width, inst.height)))
+            labels_box.add_widget(high_label)
+
+            bottom_row.add_widget(labels_box)
+            scale_box.add_widget(bottom_row)
+
+            container.add_widget(scale_box)
+
+    def set_scale_value(self, scale_title, value):
+        """Set the value for a specific scale and update has_any_rating property."""
+        self.scale_values[scale_title] = value
+        # Update has_any_rating - require ALL scales to have values
+        self.has_any_rating = all(
+            v is not None and v != ''
+            for v in self.scale_values.values()
+        )
 
     def on_enter(self, *args):
-        """Called when this screen is displayed. Loads the first/next video."""
+        """Called when this screen is displayed. Builds scales and loads the first/next video."""
+        # Build rating scales on first entry
+        if not hasattr(self, '_scales_built'):
+            self.build_rating_scales()
+            self._scales_built = True
         self.load_video()
 
     def previous_video(self, instance):
@@ -871,35 +1051,43 @@ class VideoPlayerScreen(Screen):
         popup.dismiss()
         App.get_running_app().root.current = 'questionnaire'
 
-    def set_likert(self, value):
-        """Set the creativity rating value."""
-        self.current_rating = int(value)
-
-    def set_likert_tech(self, value):
-        """Set the technical correctness rating value."""
-        self.technical_rating = int(value)
-
-    def set_likert_aesthetic(self, value):
-        """Set the aesthetic appeal rating value."""
-        self.aesthetic_rating = int(value)
-
-    def reset_likert(self):
+    def reset_scales(self):
         """
-        Reset all rating buttons to their default state and clear all ratings.
+        Reset all rating scale widgets to their default state and clear all ratings.
         Called before loading a new video.
         """
-        for btn_id in (
-                'r_m3', 'r_m2', 'r_m1', 'r_0', 'r_p1', 'r_p2', 'r_p3',
-                't_m3', 't_m2', 't_m1', 't_0', 't_p1', 't_p2', 't_p3',
-                'a_m3', 'a_m2', 'a_m1', 'a_0', 'a_p1', 'a_p2', 'a_p3',
-                'btn_notrec'
-        ):
-            if btn_id in self.ids:
-                self.ids[btn_id].state = 'normal'
+        # Reset each scale based on its type
+        for title, widgets in self.scale_widgets.items():
+            scale_config = next((s for s in self.scale_configs if s['title'] == title), None)
+            if not scale_config:
+                continue
 
-        self.current_rating = None
-        self.technical_rating = None
-        self.aesthetic_rating = None
+            scale_type = scale_config.get('type', 'discrete')
+
+            if scale_type == 'discrete':
+                # Reset all toggle buttons to 'normal' state
+                for btn in widgets:
+                    btn.state = 'normal'
+            elif scale_type == 'slider':
+                # Reset slider to middle value
+                slider = widgets[0]
+                slider_min = scale_config.get('slider_min', 0)
+                slider_max = scale_config.get('slider_max', 100)
+                slider.value = (slider_min + slider_max) / 2
+            elif scale_type == 'text':
+                # Clear text input
+                widgets[0].text = ''
+
+        # Reset all scale values to None
+        for title in self.scale_values.keys():
+            self.scale_values[title] = None
+
+        # Reset has_any_rating flag
+        self.has_any_rating = False
+
+        # Reset "action not recognized" button
+        if 'btn_notrec' in self.ids:
+            self.ids.btn_notrec.state = 'normal'
         self.action_not_recognized = False
 
 
@@ -976,7 +1164,7 @@ class VideoPlayerScreen(Screen):
 
             plt.close(fig)  # Prevent memory leak
 
-            self.reset_likert()
+            self.reset_scales()
             self.ids.submit_button.opacity = 1
             self.index += 1
             return
@@ -990,13 +1178,19 @@ class VideoPlayerScreen(Screen):
     def submit_rating(self):
         """
         Save the current ratings to a JSON file and load the next video.
-        Validates that either a creativity rating is provided or 'not recognized' is checked.
+        Validates that all ratings are provided or 'not recognized' is checked.
         """
-        # Block submission if no creativity rating is given and action not marked as unrecognized
-        if self.current_rating is None and not self.action_not_recognized:
+        # Check if ALL scales have values (not None and not empty string)
+        has_all_ratings = all(
+            value is not None and value != ''
+            for value in self.scale_values.values()
+        )
+
+        # Block submission if not all ratings given and action not marked as unrecognized
+        if not has_all_ratings and not self.action_not_recognized:
             Popup(
-                title="No Selection",
-                content=Label(text="Please rate the creativity or mark the action as not recognized."),
+                title="Incomplete Ratings",
+                content=Label(text="Please provide ratings for all scales or mark the action as not recognized."),
                 size_hint=(0.6, 0.3)
             ).open()
             return
@@ -1004,23 +1198,28 @@ class VideoPlayerScreen(Screen):
         try:
             os.makedirs('user_ratings', exist_ok=True)
 
-            rating_creativity = self.current_rating
-            rating_technical  = self.technical_rating
-            rating_aesthetic  = self.aesthetic_rating
+            # Build rating data with dynamic scale values
+            rating_data = {
+                'user_id': App.get_running_app().user.user_id,
+                'id': self.action_id,
+                'action_not_recognized': self.action_not_recognized
+            }
+
+            # Add each scale's value to the rating data
+            for title, value in self.scale_values.items():
+                # Use title as key (sanitized for JSON compatibility)
+                key = title.lower().replace(' ', '_')
+                rating_data[key] = value
 
             # Save rating data to a JSON file named: {user_id}_{action_id}.json
             filename = os.path.join('user_ratings', f"{App.get_running_app().user.user_id}_{self.action_id}.json")
             with open(filename, 'w') as f:
-                json.dump({
-                    'user_id' : App.get_running_app().user.user_id,
-                    'id': self.action_id,
-                    'action_rating' : rating_creativity,
-                    'technical_correctness': rating_technical,
-                    'aesthetic_appeal': rating_aesthetic,
-                    'action_not_recognized': self.action_not_recognized
-                }, f)
+                json.dump(rating_data, f, indent=2)
 
-            print(f"Ratings -> creativity: {rating_creativity}, technical: {rating_technical}, aesthetic: {rating_aesthetic}")
+            # Print ratings for debugging
+            ratings_str = ', '.join(f"{title}: {value}" for title, value in self.scale_values.items())
+            print(f"Ratings -> {ratings_str}")
+
             self.load_video()
         except Exception as e:
             print(f"[ERROR] Failed to save rating: {e}")

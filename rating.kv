@@ -135,176 +135,35 @@
             size_hint_y: 1 if not root.user_id_confirmed else None
             height: 0 if root.user_id_confirmed else self.parent.height
 
+            # Header
             Label:
                 text: 'Please enter your information below.'
-                font_size: root.height/40
-                size_hint_y: 0.10
+                font_size: root.height/35
+                size_hint_y: None
                 height: '48dp'
+
+            # Dynamically generated form (configured via config.yaml)
+            # Takes up all remaining space
+            ScrollView:
+                do_scroll_x: False
+                do_scroll_y: True
+                size_hint_y: 1
+                bar_width: 10
+                scroll_type: ['bars', 'content']
+
+                BoxLayout:
+                    id: form_container
+                    orientation: 'vertical'
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 2
+
+            # Navigation buttons - fixed at bottom
             BoxLayout:
-                size_hint_y: 0.10
-                height: '48dp'
-
-                Label:
-                    font_size: root.height/40
-                    text: 'Please select your gender'
-                FocusableToggleButton:
-                    id: gender_m
-                    font_size: root.height/40
-                    text: 'M'
-                    group: "user_gender"
-                    on_state: root.gender_clicked(self, self.state, "M")
-                FocusableToggleButton:
-                    id: gender_f
-                    font_size: root.height/40
-                    text: 'F'
-                    group: "user_gender"
-                    on_state: root.gender_clicked(self, self.state, "F")
-                FocusableToggleButton:
-                    id: gender_d
-                    font_size: root.height/40
-                    text: 'D'
-                    group: "user_gender"
-                    on_state: root.gender_clicked(self, self.state, "D")
-
-
-            FocusableTextInput:
-                id: input_age
-                font_size: root.height/30
-                hint_text: 'Enter your age'
-                input_filter: 'int'
-                size_hint_y: 0.10
-                height: '48dp'
-                on_text: root.age_input(self, self.text)
-                multiline: False
-
-            FocusableTextInput:
-                id: input_player_exp
-                font_size: root.height/30
-                hint_text: 'Experience as a player (years)'
-                input_filter: 'int'
-                size_hint_y: 0.10
-                height: '48dp'
-                on_text: root.player_exp_input(self, self.text)
-                multiline: False
-
-            FocusableTextInput:
-                id: input_coach_exp
-                font_size: root.height/30
-                hint_text: 'Experience as a coach (years)'
-                input_filter: 'int'
-                size_hint_y: 0.10
-                height: '48dp'
-                on_text: root.coach_exp_input(self, self.text)
-                multiline: False
-
-            FocusableTextInput:
-                id: input_watch_exp
-                font_size: root.height/30
-                hint_text: 'Experience regularly watching soccer (years)'
-                input_filter: 'int'
-                size_hint_y: 0.10
-                height: '48dp'
-                on_text: root.watch_exp_input(self, self.text)
-                multiline: False
-
-            BoxLayout:
-                size_hint_y: 0.10
-                height: '48dp'
-                Label:
-                    font_size: root.height/40
-                    text: 'Coaching License:'
-                FocusableToggleButton:
-                    id: license_none
-                    font_size: root.height/40
-                    text: 'None'
-                    group: "user_license"
-                    on_state: root.license_clicked(self, self.state, "None")
-                FocusableToggleButton:
-                    id: license_b
-                    font_size: root.height/40
-                    text: 'B'
-                    group: "user_license"
-                    on_state: root.license_clicked(self, self.state, "B")
-                FocusableToggleButton:
-                    id: license_a
-                    font_size: root.height/40
-                    text: 'A'
-                    group: "user_license"
-                    on_state: root.license_clicked(self, self.state, "A")
-                FocusableToggleButton:
-                    id: license_pro
-                    font_size: root.height/40
-                    text: 'Pro'
-                    group: "user_license"
-                    on_state: root.license_clicked(self, self.state, "Pro")
-
-
-            FocusableTextInput:
-                id: input_mother_initials
-                font_size: root.height/30
-                hint_text: "First two letters of mother's given name"
-                size_hint_y: 0.10
-                height: '48dp'
-                max_length: 2
-                on_text: root.mother_initials_input(self, self.text)
-                multiline: False
-
-            FocusableTextInput:
-                id: input_father_initials
-                font_size: root.height/30
-                hint_text: "First two letters of father's given name"
-                size_hint_y: 0.10
-                height: '48dp'
-                max_length: 2
-                on_text: root.father_initials_input(self, self.text)
-                multiline: False
-
-            FocusableTextInput:
-                id: input_siblings
-                font_size: root.height/30
-                hint_text: "Number of siblings"
-                input_filter: 'int'
-                size_hint_y: 0.10
-                height: '48dp'
-                on_text: root.siblings_input(self, self.text)
-                multiline: False
-
-            BoxLayout:
-                size_hint_y: 0.10
-                height: '48dp'
-                spacing: 5
-                Label:
-                    font_size: root.height/40
-                    text: 'Birthday:'
-                    size_hint_x: 0.3
-                FocusableTextInput:
-                    id: input_birth_day
-                    font_size: root.height/30
-                    hint_text: 'Day'
-                    input_filter: 'int'
-                    on_text: root.birth_day_input(self, self.text)
-                    multiline: False
-                FocusableTextInput:
-                    id: input_birth_month
-                    font_size: root.height/30
-                    hint_text: 'Month'
-                    input_filter: 'int'
-                    on_text: root.birth_month_input(self, self.text)
-                    multiline: False
-                FocusableTextInput:
-                    id: input_birth_year
-                    font_size: root.height/30
-                    hint_text: 'Year'
-                    input_filter: 'int'
-                    on_text: root.birth_year_input(self, self.text)
-                    multiline: False
-
-            Label:
-                size_hint_y: 0.25
-                text: ''
-
-            BoxLayout:
-                size_hint_y: 0.15
+                size_hint_y: None
+                height: '60dp'
+                spacing: 10
+                padding: [10, 5, 10, 5]
                 FocusableButton:
                     id: btn_back
                     font_size: root.height/40
@@ -455,7 +314,7 @@
                     font_size: root.height/40
                     size_hint_x: .3
                     text: 'Action not Recognized'
-                    on_state: root.action_not_recognized = (self.state == 'down')
+                    on_state: root.action_not_recognized = (self.state == 'down'); root.set_scale_value('', '')
                 Button:
                     id: submit_button
                     font_size: root.height/40

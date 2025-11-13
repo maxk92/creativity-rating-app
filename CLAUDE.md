@@ -135,7 +135,9 @@ This is crucial because the app runs in fullscreen mode without mouse interactio
 
 ## Configuration
 
-### config.yaml Structure
+The configuration is split across three YAML files for better readability:
+
+### config.yaml (Main Configuration)
 
 ```yaml
 paths:
@@ -144,52 +146,61 @@ paths:
 
 settings:
   min_ratings_per_video: 2  # Stop showing videos after N ratings collected
-
-questionnaire_fields:
-  - active: true/false
-    type: "multiple_choice"  # or "text" or "numeric"
-    field_name: "gender"      # Internal name (no spaces)
-    title: "Please select your gender"  # Label/prompt
-    options: ["M", "F", "D"]  # For multiple_choice only
-    hint_text: "Enter your age"  # For text/numeric only
-    max_length: 2  # For text only
-    required_for_user_id: true  # Whether field is used in user ID generation
-    group: "birthday"  # Optional: group related fields in one row
+  questionnaire_fields_file: "questionnaire_fields.yaml"  # External file for questionnaire config
+  rating_scales_file: "rating_scales.yaml"  # External file for rating scales config
+  modality: "video"  # "video" or "image" - determines media type
 
 screen_dimensions:
   metadata_display_height: 0.08   # Proportional heights (must sum to 1.0)
   video_player_height: 0.46
   control_buttons_height: 0.08
   rating_scales_height: 0.38      # Increase this if adding more scales
-
-rating_scales:
-  - active: true/false
-    type: "discrete"  # or "slider" or "text"
-    title: "Scale Name"
-    label_low: "left label"
-    label_high: "right label"
-    values: [1, 2, 3, 4, 5, 6, 7]  # for discrete only
-    # slider_min/max: for slider type only
-    required_to_proceed: true  # Whether user must provide input (default: true)
-                                # When "action not recognized" is pressed, all scales become optional
 ```
 
-**Important:** When adding/removing rating scales, adjust `screen_dimensions.rating_scales_height` to ensure scales fit properly on screen.
+### questionnaire_fields.yaml (Questionnaire Configuration)
+
+```yaml
+- active: true/false
+  type: "multiple_choice"  # or "text" or "numeric"
+  field_name: "gender"      # Internal name (no spaces)
+  title: "Please select your gender"  # Label/prompt
+  options: ["M", "F", "D"]  # For multiple_choice only
+  hint_text: "Enter your age"  # For text/numeric only
+  max_length: 2  # For text only
+  required_for_user_id: true  # Whether field is used in user ID generation
+  group: "birthday"  # Optional: group related fields in one row
+```
+
+### rating_scales.yaml (Rating Scales Configuration)
+
+```yaml
+- active: true/false
+  type: "discrete"  # or "slider" or "text"
+  title: "Scale Name"
+  label_low: "left label"
+  label_high: "right label"
+  values: [1, 2, 3, 4, 5, 6, 7]  # for discrete only
+  # slider_min/max: for slider type only
+  required_to_proceed: true  # Whether user must provide input (default: true)
+                              # When "action not recognized" is pressed, all scales become optional
+```
+
+**Important:** When adding/removing rating scales, adjust `screen_dimensions.rating_scales_height` in config.yaml to ensure scales fit properly on screen.
 
 ## Adapting the Application
 
 ### Adding/Modifying Questionnaire Fields
 
-Edit `config.yaml` only - no code changes needed:
-1. Add new field entry under `questionnaire_fields` with `active: true`
+Edit `questionnaire_fields.yaml` only - no code changes needed:
+1. Add new field entry with `active: true`
 2. Specify field_name (internal), type, title/hint_text, and any options
 3. The app will automatically generate widgets, save data, and handle user ID generation for marked fields
 
 ### Adding/Modifying Rating Scales
 
-Edit `config.yaml` only - no code changes needed:
-1. Add new scale entry under `rating_scales` with `active: true`
-2. Adjust `screen_dimensions.rating_scales_height` if necessary
+Edit `rating_scales.yaml` only - no code changes needed:
+1. Add new scale entry with `active: true`
+2. Adjust `screen_dimensions.rating_scales_height` in config.yaml if necessary
 3. The app will automatically generate widgets and save new dimensions to JSON
 
 ### Changing Video Sources
@@ -224,15 +235,17 @@ The export script dynamically detects scale columns by excluding metadata column
 ## File Structure
 
 ```
-CreativityRatingApp.py    # Main application logic and screen classes
-rating.kv                  # Kivy UI layout definitions
-config.yaml                # Configuration (paths, scales, screen layout)
-write_ratings2csv.py       # Data export and backup script
-requirements.txt           # Python dependencies
-user_data/                 # Generated user demographics (JSON)
-user_ratings/              # Generated rating data (JSON)
-backup/                    # Auto-backup of JSON files
-output/                    # CSV exports and logs
+CreativityRatingApp.py        # Main application logic and screen classes
+rating.kv                      # Kivy UI layout definitions
+config.yaml                    # Main configuration (paths, settings, screen layout)
+questionnaire_fields.yaml      # Questionnaire fields configuration
+rating_scales.yaml             # Rating scales configuration
+write_ratings2csv.py           # Data export and backup script
+requirements.txt               # Python dependencies
+user_data/                     # Generated user demographics (JSON)
+user_ratings/                  # Generated rating data (JSON)
+backup/                        # Auto-backup of JSON files
+output/                        # CSV exports and logs
 ```
 
 ## Dependencies

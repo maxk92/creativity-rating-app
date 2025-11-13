@@ -1,0 +1,89 @@
+# Rating scales configuration
+# Each scale can be customized with the following properties:
+# - active: true/false - whether to display this scale
+# - type: "discrete", "slider", or "text"
+# - title: the name of the scale shown to users
+# - label_low: label shown at the low end of the scale
+# - label_high: label shown at the high end of the scale
+# - values: (for discrete type only) list of discrete values to display [e.g., [1,2,3,4,5,6,7] or [-2,-1,0,1,2]]
+# - slider_min: (for slider type only) minimum value of the slider
+# - slider_max: (for slider type only) maximum value of the slider
+# - required_to_proceed: true/false - whether user must provide input for this scale to proceed (default: true)
+#   Note: When "action not recognized" is pressed, all scales become optional
+
+- active: true
+  type: "discrete"
+  title: "Creativity"
+  label_low: "not creative"
+  label_high: "very creative"
+  values: [1, 2, 3, 4, 5, 6, 7]
+  required_to_proceed: true
+
+- active: true
+  type: "discrete"
+  title: "Technical Correctness"
+  label_low: "very low"
+  label_high: "very high"
+  values: [1, 2, 3, 4, 5, 6, 7]
+  required_to_proceed: true
+
+- active: true
+  type: "discrete"
+  title: "Aesthetic Appeal"
+  label_low: "not appealing"
+  label_high: "very appealing"
+  values: [1, 2, 3, 4, 5, 6, 7]
+  required_to_proceed: true
+
+# Example of a slider scale (inactive by default)
+# Uncomment to add a slider scale from 0-100
+- active: true
+  type: "slider"
+  title: "Overall Quality"
+  label_low: "poor"
+  label_high: "excellent"
+  slider_min: 0
+  slider_max: 100
+  required_to_proceed: false
+
+# Example of a text input scale (inactive by default)
+# Uncomment to add a free-text comments field
+#- active: true
+#  type: "text"
+#  title: "Comments"
+#  label_low: ""
+#  label_high: ""
+
+# Example of a 5-point discrete scale (inactive by default)
+- active: false
+  type: "text"
+  title: "Open Comment"
+  label_low: ""
+  label_high: ""
+  #values: [1, 2, 3, 4, 5, 6, 7, 8]
+
+# Example of a discrete scale with custom labels (e.g., -2 to +2)
+- active: false
+  type: "slider"
+  title: "Confidence"
+  label_low: "0%"
+  label_high: "100%"
+  slider_min: 0
+  slider_max: 1
+
+# Example of a percentage slider (0-1)
+- active: false
+  type: "slider"
+  title: "Random"
+  label_low: "0%"
+  label_high: "100%"
+  slider_min: 0
+  slider_max: 1
+
+- active: false
+  type: "slider"
+  title: "Random"
+  label_low: "0%"
+  label_high: "100%"
+  slider_min: 0
+  slider_max: 1

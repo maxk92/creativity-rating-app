@@ -1,0 +1,100 @@
+# Questionnaire fields configuration
+# Each field can be customized with the following properties:
+# - active: true/false - whether to display this field
+# - type: "multiple_choice", "text", "numeric"
+# - field_name: internal name for storing data (no spaces, lowercase)
+# - title: label/prompt shown to users
+# - options: (for multiple_choice only) list of button labels
+# - hint_text: (for text/numeric only) placeholder text
+# - max_length: (for text only) maximum number of characters
+# - required_for_user_id: true/false - whether this field is used in user ID generation
+
+- active: true
+  type: "multiple_choice"
+  field_name: "gender"
+  title: "What best describes your gender?"
+  options: ["Female", "Male", "Non-binary", "A gender not listed here"]
+
+- active: true
+  type: "numeric"
+  field_name: "age"
+  title: ""
+  hint_text: "Enter your age"
+
+- active: true
+  type: "text"
+  field_name: "nationality"
+  title: ""
+  hint_text: "Enter your nationality"
+
+- active: true
+  type: "numeric"
+  field_name: "player_exp"
+  title: ""
+  hint_text: "Experience as a player (years)"
+
+- active: true
+  type: "numeric"
+  field_name: "coach_exp"
+  title: ""
+  hint_text: "Experience as a coach (years)"
+
+- active: true
+  type: "numeric"
+  field_name: "watch_exp"
+  title: ""
+  hint_text: "Experience regularly watching soccer (years)"
+
+- active: true
+  type: "multiple_choice"
+  field_name: "license"
+  title: "Coaching License:"
+  options: ["None", "B", "A", "Pro"]
+
+# User ID generation fields
+- active: true
+  type: "text"
+  field_name: "mother_initials"
+  title: ""
+  hint_text: "First two letters of mother's given name"
+  max_length: 2
+  required_for_user_id: true
+
+- active: true
+  type: "text"
+  field_name: "father_initials"
+  title: ""
+  hint_text: "First two letters of father's given name"
+  max_length: 2
+  required_for_user_id: true
+
+- active: true
+  type: "numeric"
+  field_name: "siblings"
+  title: ""
+  hint_text: "Number of siblings"
+  required_for_user_id: true
+
+- active: true
+  type: "numeric"
+  field_name: "birth_day"
+  title: "Birthday:"
+  hint_text: "Day"
+  required_for_user_id: true
+  group: "birthday"
+
+- active: true
+  type: "numeric"
+  field_name: "birth_month"
+  title: ""
+  hint_text: "Month"
+  required_for_user_id: true
+  group: "birthday"
+
+- active: true
+  type: "numeric"
+  field_name: "birth_year"
+  title: ""
+  hint_text: "Year"
+  required_for_user_id: true
+  group: "birthday"

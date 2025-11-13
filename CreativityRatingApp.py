@@ -489,8 +489,17 @@ class QuestionnaireScreen(Screen):
             with open('config.yaml', 'r') as file:
                 config_data = yaml.safe_load(file)
 
-            # Load questionnaire fields configuration
-            all_fields = config_data.get('questionnaire_fields', [])
+            # Load questionnaire fields from external file
+            questionnaire_file = config_data['settings'].get('questionnaire_fields_file', 'questionnaire_fields.yaml')
+            try:
+                with open(questionnaire_file, 'r') as file:
+                    all_fields = yaml.safe_load(file)
+                    if all_fields is None:
+                        all_fields = []
+            except FileNotFoundError:
+                print(f"[WARNING] {questionnaire_file} not found, using empty questionnaire fields")
+                all_fields = []
+
             # Filter only active fields
             self.field_configs = [field for field in all_fields if field.get('active', False)]
 
@@ -974,8 +983,17 @@ class VideoPlayerScreen(Screen):
             self.control_buttons_height = screen_dims.get('control_buttons_height', 0.08)
             self.rating_scales_height = screen_dims.get('rating_scales_height', 0.28)
 
-            # Load rating scales configuration
-            all_scales = config_data.get('rating_scales', [])
+            # Load rating scales from external file
+            rating_scales_file = config_data['settings'].get('rating_scales_file', 'rating_scales.yaml')
+            try:
+                with open(rating_scales_file, 'r') as file:
+                    all_scales = yaml.safe_load(file)
+                    if all_scales is None:
+                        all_scales = []
+            except FileNotFoundError:
+                print(f"[WARNING] {rating_scales_file} not found, using empty rating scales")
+                all_scales = []
+
             # Filter only active scales
             self.scale_configs = [scale for scale in all_scales if scale.get('active', False)]
 

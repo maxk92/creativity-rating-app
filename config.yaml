@@ -158,7 +158,7 @@ rating_scales:
     label_low: "not appealing"
     label_high: "very appealing"
     values: [1, 2, 3, 4, 5, 6, 7]
-    required_to_proceed: false
+    required_to_proceed: true
 
   # Example of a slider scale (inactive by default)
   # Uncomment to add a slider scale from 0-100
